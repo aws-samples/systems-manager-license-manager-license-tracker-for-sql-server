@@ -1,0 +1,317 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'CloudFormation template for SQL License Tracking Solution using Systems Manager'
+Parameters:
+  SQLEELicenseConfiguration:
+    Description: (Optional) License Configuration ARN for SQL Enterprise Edition
+    Type: String
+    AllowedPattern: '^$|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Enterprise Edition
+  SQLEXPLicenseConfiguration:
+    Description: (Optional) License Configuration ARN for SQL Express Edition
+    Type: String
+    AllowedPattern: '^$|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Express Edition
+  SQLSTDLicenseConfiguration:
+    Description: (Optional) License Configuration ARN for SQL Standard Edition
+    Type: String
+    AllowedPattern: '^$|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Standard Edition
+  SQLWEBLicenseConfiguration:
+    Description: (Optional) License Configuration ARN for SQL Web Edition
+    Type: String
+    AllowedPattern: '^$|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Web Edition
+  SQLDEVLicenseConfiguration:
+    Description: (Optional) License Configuration ARN for SQL Developer Edition
+    Type: String
+    AllowedPattern: '^$|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Developer Edition
+Resources:
+  SSMDocument:
+    Type: 'AWS::SSM::Document'
+    Properties:
+      Name: SQLLicenseTrackingSolution-Document
+      Content: !Sub |
+        {
+          "description" : "SQL License Tracking Solution",
+          "schemaVersion" : "0.3",
+          "assumeRole" : "{{ AutomationAssumeRole }}",
+          "outputs" : [ 
+            "updateInventory.result",
+            "updateLicenseManagerConfiguration.result" 
+          ],
+          "parameters" : {
+            "InstanceId" : {
+              "type" : "String",
+              "description" : "(Required) The ID of the EC2 instance",
+              "allowedPattern" : "^[m]{0,1}i-[a-z0-9]{8,17}$"
+            },
+            "Region" : {
+              "type" : "String",
+              "description" : "AWS Region",
+              "default" : "${AWS::Region}"
+            },
+            "AccountId" : {
+              "type" : "String",
+              "description" : "AWS Account ID",
+              "default" : "${AWS::AccountId}"
+            },
+            "SQLEELicenseConfiguration" : {
+              "type" : "String",
+              "description" : "(Optional) License Configuration ARN for SQL Enterprise Edition",
+              "default" : "${SQLEELicenseConfiguration}"
+            },
+            "SQLEXPLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "(Optional) License Configuration ARN for SQL Express Edition",
+              "default" : "${SQLEXPLicenseConfiguration}"
+            },
+            "SQLSTDLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "(Optional) License Configuration ARN for SQL Standard Edition",
+              "default" : "${SQLSTDLicenseConfiguration}"
+            },
+            "SQLWEBLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "(Optional) License Configuration ARN for SQL Web Edition",
+              "default" : "${SQLWEBLicenseConfiguration}"
+            },
+            "SQLDEVLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "(Optional) License Configuration ARN for SQL Developer Edition",
+              "default" : "${SQLDEVLicenseConfiguration}"
+            },
+            "AutomationAssumeRole" : {
+              "type" : "String",
+              "description" : "(Required) The IAM role required to execute this document. If no role is specified, then AWS Systems Manager will be unable to complete the execution of this document.",
+              "default" : ""
+            }
+          },
+          "mainSteps" : [ {
+            "name" : "assertInstanceEligibility",
+            "action" : "aws:executeScript",
+            "description" : "This step checks if the EC2 instance is eligible for this document. The two criteria for this are - (i) is a SSM managed instance and is currently online, (ii) is running on a Windows operating system",
+            "inputs" : {
+              "Runtime" : "python3.7",
+              "Handler" : "script_handler",
+              "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  instanceId = events['instanceId']\n\n  client = boto3.client('ssm')\n  \n  response = client.describe_instance_information(\n    InstanceInformationFilterList=[\n        {\n            'key': 'InstanceIds',\n            'valueSet': [\n                instanceId,\n            ]\n        },\n    ]\n  )\n  \n  if response[\"InstanceInformationList\"]:\n    if response[\"InstanceInformationList\"][0]['PingStatus'] == 'Online' and response[\"InstanceInformationList\"][0]['PlatformType'] == 'Windows':\n      status = f\"{instanceId} is eligible for this automation execution\"\n    else:\n      raise Exception(f\"{instanceId} currently appears to be unavilable for this automation\")\n  else:\n    raise Exception(f\"{instanceId} is ineligible for this automation\")\n                    \n  return status",
+              "InputPayload" : {
+                "instanceId" : "{{ InstanceId }}"
+              }
+            },
+            "nextStep" : "removeInventoryAndLicenseConfigData",
+            "isCritical" : false
+          }, {
+            "name" : "removeInventoryAndLicenseConfigData",
+            "action" : "aws:executeScript",
+            "description" : "This step performs two clean up tasks. Firstly, deletes all the metadata associated with the custom inventory type (https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL [“Custom:SQLServer”] on all the EC2 instances. Secondly, we remove any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data in to both SSM Inventory and License Manager in case changes have been made",
+            "inputs" : {
+              "Runtime" : "python3.7",
+              "Handler" : "script_handler",
+              "Script" : "import boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n\n  lmClient = boto3.client('license-manager')\n  ssmClient = boto3.client('ssm')\n  \n  accountId = events['accountId'] \n  region = events['region'] \n  instanceId = events['instanceId'] \n  sqlEELicenseConfig = events['sqlEELicenseConfig'] \n  sqlSTDLicenseConfig = events['sqlSTDLicenseConfig']\n  sqlEXPLicenseConfig = events['sqlEXPLicenseConfig']\n  sqlWEBLicenseConfig = events['sqlWEBLicenseConfig']\n  sqlDEVLicenseConfig = events['sqlDEVLicenseConfig']\n\n  ec2ARN = f\"arn:aws:ec2:{region}:{accountId}:instance/{instanceId}\"\n  licenseConfigARN = ''\n  \n  try:\n    lmResponse = lmClient.list_license_specifications_for_resource(\n                  ResourceArn=ec2ARN,\n                  MaxResults=10\n                  )\n                  \n    if lmResponse['LicenseSpecifications']:\n      for spec in lmResponse['LicenseSpecifications']:\n        if spec['LicenseConfigurationArn']:\n          if (sqlEELicenseConfig and spec['LicenseConfigurationArn'] == sqlEELicenseConfig):\n            licenseConfigARN = sqlEELicenseConfig\n            \n          elif (sqlSTDLicenseConfig and spec['LicenseConfigurationArn'] == sqlSTDLicenseConfig):\n            licenseConfigARN = sqlSTDLicenseConfig\n                          \n          elif (sqlEXPLicenseConfig and spec['LicenseConfigurationArn'] == sqlEXPLicenseConfig):\n            licenseConfigARN = sqlEXPLicenseConfig\n            \n          elif (sqlWEBLicenseConfig and spec['LicenseConfigurationArn'] == sqlWEBLicenseConfig):\n            licenseConfigARN = sqlWEBLicenseConfig\n            \n          elif (sqlDEVLicenseConfig and spec['LicenseConfigurationArn'] == sqlDEVLicenseConfig):\n            licenseConfigARN = sqlDEVLicenseConfig\n                          \n        if licenseConfigARN:\n          updateResponse = lmClient.update_license_specifications_for_resource(\n                          ResourceArn=ec2ARN,\n                          RemoveLicenseSpecifications=[\n                          {\n                              'LicenseConfigurationArn': licenseConfigARN\n                          }]);\n          licenseConfigARN = ''                \n          \n  except botocore.exceptions.ClientError as error:\n    if error.response['Error']['Code'] == 'InvalidParameterValueException':\n      print('License specification does not exist for this resource. Skipping this step')\n    else:\n      print('Unknown error')\n                        \n  try:\n    ssmResponse = ssmClient.delete_inventory(\n      TypeName='Custom:SQLServer'\n    )\n  \n  except botocore.exceptions.ClientError as error:\n    print(\"Custom Inventory deletion error: \",error)",
+              "InputPayload" : {
+                "accountId" : "{{ AccountId }}",
+                "region" : "{{ Region }}",
+                "instanceId" : "{{ InstanceId }}",
+                "sqlEELicenseConfig" : "{{ SQLEELicenseConfiguration }}",
+                "sqlSTDLicenseConfig" : "{{ SQLSTDLicenseConfiguration }}",
+                "sqlEXPLicenseConfig" : "{{ SQLEXPLicenseConfiguration }}",
+                "sqlWEBLicenseConfig" : "{{ SQLWEBLicenseConfiguration }}",
+                "sqlDEVLicenseConfig" : "{{ SQLDEVLicenseConfiguration }}"
+              }
+            },
+            "nextStep" : "isSQLServerInstalled",
+            "isCritical" : false
+          }, {
+            "name" : "isSQLServerInstalled",
+            "description" : "In this step we check if MSSQL is installed and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the MSSQL instances",
+            "isEnd" : false,
+            "action" : "aws:runCommand",
+            "onFailure" : "Abort",
+            "inputs" : {
+              "DocumentName" : "AWS-RunPowerShellScript",
+              "InstanceIds" : [ "{{ InstanceId }}" ],
+              "Parameters" : {
+                "commands" : [ "$found = \"false\"\n$list = New-Object System.Collections.ArrayList\n$pathExists = Test-Path -Path \"HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\"\nif ($pathExists)\n{\n  $found = \"true\"\n  $server = (get-itemproperty -ErrorAction Stop 'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server').InstalledInstances\n  foreach ($s in $server) \n  {\n      $p = (Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL').$s\n      $o = [pscustomobject]@{\n       Version = (Get-ItemProperty \"HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$p\\Setup\").Version\n       Edition = (Get-ItemProperty \"HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$p\\Setup\").Edition\n       Name = $p\n      }\n      $server_info_list = $list.Add($o)\n  }\n  $jsonList = ConvertTo-Json -InputObject $list\n  return $jsonList\n}\nelse\n{\n  return $found\n}\n" ]
+              }
+            },
+            "outputs" : [ {
+              "Name" : "result",
+              "Type" : "String",
+              "Selector" : "$.Output"
+            } ]
+          }, {
+            "name" : "foundSQLServerInstalledBranch",
+            "description" : "This step will branch (https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) out based on the evaluation of the previous step, defaulting to the next step if MSSQL exists on the EC2 instance otherwise exiting if unavailable",
+            "isEnd" : false,
+            "onFailure" : "Abort",
+            "action" : "aws:branch",
+            "inputs" : {
+              "Choices" : [ {
+                "NextStep" : "exitIfNoSqlServerFound",
+                "Variable" : "{{isSQLServerInstalled.result}}",
+                "Contains" : "false"
+              } ],
+              "Default" : "updateInventory"
+            }
+          }, {
+            "name" : "updateInventory",
+            "description" : "Using the output of step 3 (metadata) we will update SSM Inventory with a custom inventory of type “Custom:SQLServer” for the EC2 instance",
+            "action" : "aws:executeScript",
+            "inputs" : {
+              "Runtime" : "python3.7",
+              "Handler" : "script_handler",
+              "Script" : "import boto3\nimport json\nfrom datetime import datetime, timezone\n  \nssm = boto3.client('ssm')\n\ndef script_handler(events, context):\n  sqlInfo = events['sqlInfo']\n  infoList = list(eval(sqlInfo))\n  timestamp = datetime.now(timezone.utc).isoformat()[:-13] + 'Z'\n  \n  response = ssm.put_inventory(\n    InstanceId=events['instanceId'],\n    Items=[\n        {\n            'TypeName': 'Custom:SQLServer',\n            'SchemaVersion': '1.0',\n            'CaptureTime': timestamp,\n            'Content': infoList\n        },\n    ]\n  )\n  \n  if \"HTTPStatusCode\" in response[\"ResponseMetadata\"]:\n    httpStatusCode = response[\"ResponseMetadata\"][\"HTTPStatusCode\"]\n    if httpStatusCode == 200:\n      status = 'Successfully updated Inventory'\n    else:\n      status = 'Failed to update Inventory'\n  else:\n    raise Exception(f\"It appears that this step could not be completed due to an unknown error. Please check the logs for more details\")\n  return {'message': status}",
+              "InputPayload" : {
+                "instanceId" : "{{InstanceId}}",
+                "sqlInfo" : "{{isSQLServerInstalled.result}}"
+              }
+            },
+            "isEnd" : false,
+            "onFailure" : "Abort",
+            "outputs" : [ {
+              "Name" : "result",
+              "Selector" : "$.Payload.message",
+              "Type" : "String"
+            } ],
+            "nextStep" : "updateLicenseManagerConfiguration"
+          }, {
+            "name" : "updateLicenseManagerConfiguration",
+            "description" : "In this last step we determine the highest edition of SQL installed and accordingly update the License Manager Configuration associated with the EC2 instance",
+            "action" : "aws:executeScript",
+            "isEnd" : true,
+            "onFailure" : "Abort",
+            "outputs" : [ {
+              "Name" : "result",
+              "Selector" : "$.Payload.message",
+              "Type" : "String"
+            } ],
+            "inputs" : {
+              "Runtime" : "python3.7",
+              "Handler" : "script_handler",
+              "InputPayload" : {
+                "accountId" : "{{ AccountId }}",
+                "region" : "{{ Region }}",
+                "instanceId" : "{{ InstanceId }}",
+                "sqlInfo" : "{{isSQLServerInstalled.result}}",
+                "sqlEELicenseConfig" : "{{ SQLEELicenseConfiguration }}",
+                "sqlSTDLicenseConfig" : "{{ SQLSTDLicenseConfiguration }}",
+                "sqlEXPLicenseConfig" : "{{ SQLEXPLicenseConfiguration }}",
+                "sqlWEBLicenseConfig" : "{{ SQLWEBLicenseConfiguration }}",
+                "sqlDEVLicenseConfig" : "{{ SQLDEVLicenseConfiguration }}"
+              },
+              "Script" : "import boto3\nimport json\n\ndef script_handler(events, context):\n\n  sqlInfo = events['sqlInfo']\n  jsonSqlInfo = json.loads(sqlInfo)\n  \n  editions = {1: 'Enterprise Edition',\n        2: 'Standard Edition',\n        3: 'Web Edition',\n        4: 'Express Edition',\n        5: 'Developer Edition'}\n        \n  highestEdition = ''\n  for key, value in editions.items():\n\n    for instance in jsonSqlInfo:\n    \n      if (instance[\"Edition\"] == value):\n        highestEdition = value\n        break\n    if highestEdition:\n      break\n      \n  lmClient = boto3.client('license-manager')\n  \n  accountId = events['accountId'] \n  region = events['region'] \n  instanceId = events['instanceId'] \n  sqlEELicenseConfig = events['sqlEELicenseConfig'] \n  sqlSTDLicenseConfig = events['sqlSTDLicenseConfig'] \n  sqlEXPLicenseConfig = events['sqlEXPLicenseConfig'] \n  sqlWEBLicenseConfig = events['sqlWEBLicenseConfig'] \n  sqlDEVLicenseConfig = events['sqlDEVLicenseConfig'] \n  \n  ec2ARN = f\"arn:aws:ec2:{region}:{accountId}:instance/{instanceId}\"\n  licenseConfigARN = ''\n  \n  if highestEdition == \"Enterprise Edition\" and sqlEELicenseConfig:\n    licenseConfigARN = sqlEELicenseConfig\n     \n  elif highestEdition == \"Standard Edition\" and sqlSTDLicenseConfig:\n    licenseConfigARN =  sqlSTDLicenseConfig\n    \n  elif highestEdition == \"Web Edition\" and sqlWEBLicenseConfig:\n    licenseConfigARN =  sqlWEBLicenseConfig \n    \n  elif highestEdition == \"Express Edition\" and sqlEXPLicenseConfig:\n    licenseConfigARN  = sqlEXPLicenseConfig\n          \n  elif highestEdition == \"Developer Edition\" and sqlDEVLicenseConfig:\n    licenseConfigARN  = sqlDEVLicenseConfig\n    \n  else:\n    raise Exception(f\"Sorry, No {highestEdition} License Configuration ARN has been supplied\")\n    \n    \n  if licenseConfigARN:\n    response = lmClient.update_license_specifications_for_resource(\n        ResourceArn=ec2ARN,\n        AddLicenseSpecifications=[\n        {\n            'LicenseConfigurationArn': licenseConfigARN\n        }]);\n    licenseConfigARN = ''\n\n    if \"HTTPStatusCode\" in response[\"ResponseMetadata\"]:\n      httpStatusCode = response[\"ResponseMetadata\"][\"HTTPStatusCode\"]\n      if httpStatusCode == 200:\n        status = 'Successfully updated License Manager Configuration'\n      else:\n        status = 'Failed to update License Manager Configuration'\n    else:\n      raise Exception(f\"It appears that this step could not be completed due to an unknown error. Please check the logs for more details\")\n  return {'message': status}"
+            }
+          }, {
+            "name" : "exitIfNoSqlServerFound",
+            "action" : "aws:runCommand",
+            "isEnd" : true,
+            "onFailure" : "Abort",
+            "inputs" : {
+              "DocumentName" : "AWS-RunPowerShellScript",
+              "Parameters" : {
+                "commands" : [ "$message= 'No SQL Instances found'\nreturn $message\n" ]
+              },
+              "InstanceIds" : [ "{{ InstanceId }}" ]
+            },
+            "outputs" : [ {
+              "Name" : "message",
+              "Selector" : "$.Output",
+              "Type" : "String"
+            } ],
+            "description" : "This step is triggered if there are no SQL instances found."
+          } ]
+        }
+      DocumentType: Automation
+  SSMAssociation:
+    Type: 'AWS::SSM::Association'
+    Properties:
+      Name: !Ref SSMDocument
+      DocumentVersion: $DEFAULT
+      Parameters:
+        AccountId:
+          - !Ref AWS::AccountId
+        AutomationAssumeRole:
+          - !GetAtt IAMRole.Arn
+        Region:
+          - !Ref AWS::Region
+        SQLEELicenseConfiguration:
+          - !Ref SQLEELicenseConfiguration
+        SQLEXPLicenseConfiguration:
+          - !Ref SQLEXPLicenseConfiguration
+        SQLSTDLicenseConfiguration:
+          - !Ref SQLSTDLicenseConfiguration
+        SQLWEBLicenseConfiguration:
+          - !Ref SQLWEBLicenseConfiguration
+        SQLDEVLicenseConfiguration:
+          - !Ref SQLDEVLicenseConfiguration
+      ScheduleExpression: cron(0 00 22 ? * * *)
+      AssociationName: SQLLicenseTrackingSolution-Association
+      MaxConcurrency: 3
+      MaxErrors: 5
+      Targets:
+        - Key: InstanceIds
+          Values:
+            - '*'
+      AutomationTargetParameterName: InstanceId
+  IAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: /
+      RoleName: SQLLicenseTrackingSolution-Role
+      AssumeRolePolicyDocument: >-
+        {"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"Service":"ssm.amazonaws.com"},"Action":"sts:AssumeRole"}]}
+      MaxSessionDuration: 3600
+      Policies: 
+        - PolicyName: SQLLicenseTrackingSolution-Policy
+          PolicyDocument: !Sub |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                  {
+                      "Sid": "sid0",
+                      "Effect": "Allow",
+                      "Action": [
+                          "license-manager:UpdateLicenseSpecificationsForResource"
+                      ],
+                      "Resource": "*"
+                  },
+                  {
+                      "Sid": "sid1",
+                      "Effect": "Allow",
+                      "Action": [
+                          "ssm:SendCommand"
+                      ],
+                      "Resource": [
+                          "arn:aws:ec2:*:${AWS::AccountId}:instance/*",
+                          "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${SSMDocument}:VersionId}",
+                          "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:document/${SSMDocument}",
+                          "arn:aws:ssm:${AWS::Region}:*:document/AWS-RunPowerShellScript"
+                      ]
+                  },
+                  {
+                      "Sid": "sid2",
+                      "Effect": "Allow",
+                      "Action": "ssm:StartAutomationExecution",
+                      "Resource": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${SSMDocument}:VersionId}"
+                  },
+                  {
+                      "Sid": "sid3",
+                      "Effect": "Allow",
+                      "Action": [
+                          "ssm:DescribeAutomationExecutions",
+                          "ssm:GetAutomationExecution",
+                          "ssm:PutInventory",
+                          "ssm:DescribeAutomationStepExecutions",
+                          "ssm:ListCommands",
+                          "ssm:DescribeInstanceInformation",
+                          "ssm:SendAutomationSignal",
+                          "ssm:ListCommandInvocations",
+                          "ssm:StopAutomationExecution",
+                          "license-manager:ListLicenseSpecificationsForResource"
+                      ],
+                      "Resource": "*"
+                  }
+              ]
+            }
+      Description: Allows SSM to call AWS services on your behalf for SQL License Tracking Solution
