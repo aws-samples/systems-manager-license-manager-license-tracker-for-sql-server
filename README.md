@@ -95,28 +95,28 @@ You need to create an IAM Policy that allows SSM to call other AWS services, suc
 }
 ```
 
-1. Choose **Review policy**.
-2. For **Name**, type `SQLServerLicenseTracker-Policy`.
-3. For **Description**, enter `Policy used by (SSM) SQLServerLicenseTracker-Role to track SQL Server Licenses using License Manager`.
-4. Choose **Create policy**.
+4. Choose **Review policy**.
+5. For **Name**, type `SQLServerLicenseTracker-Policy`.
+6. For **Description**, enter `Policy used by (SSM) SQLServerLicenseTracker-Role to track SQL Server Licenses using License Manager`.
+7. Choose **Create policy**.
 
 Next, you need to create an IAM role and attach this policy.
 
-1. On the IAM console, choose **Roles**.
-2. Choose **Create role**.
-3. Select **AWS service**.
-4. Select **Systems Manager**.
-5. Choose **Systems Manager** under Select your use case as shown below.
+8. On the IAM console, choose **Roles**.
+9. Choose **Create role**.
+10. Select **AWS service**.
+11. Select **Systems Manager**.
+12. Choose **Systems Manager** under Select your use case as shown below.
 
 ![](images/console-view.png)
 
-1. Choose **Next: Permissions**.
-2. For **Filter policies**, enter `SQLServerLicenseTracker-Policy`
-3. Choose **Next: Tags**.
-4. Choose **Next: Review**.
-5. For **Role name**, specify `SQLServerLicenseTracker-Role`.
-6. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`.
-7. Choose **Create role**.
+13. Choose **Next: Permissions**.
+14. For **Filter policies**, enter `SQLServerLicenseTracker-Policy`
+15. Choose **Next: Tags**.
+16. Choose **Next: Review**.
+17. For **Role name**, specify `SQLServerLicenseTracker-Role`.
+18. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`.
+19. Choose **Create role**.
 
 
 ## Create Automation Document
@@ -155,10 +155,10 @@ Let’s walk through each step executed in the document as illustrated below.
 6. Choose **Rate control**
 7. In the Targets section, select **InstanceId** for **Parameter** and **All Instances** for **Targets**
 8. Populate the following under **Input parameters**
-    i. Region: `<Region where the document was deployed in>`
-    ii. AccountId: `<AWS Account ID where the document was deployed in>`
-    iii. LicenseConfiguration(s): `<AWS License Manager Configuration ARN associated with the different editions of SQL instances>`
-    iv. AutomationAssumeRole: select `SQLServerLicenseTracker-Role`
+  1. Region: `<Region where the document was deployed in>`
+  2. AccountId: `<AWS Account ID where the document was deployed in>`
+  3. LicenseConfiguration(s): `<AWS License Manager Configuration ARN associated with the different editions of SQL instances>`
+  4. AutomationAssumeRole: select `SQLServerLicenseTracker-Role`
 9. For Specify schedule we recommend using the **CRON schedule builder running every day** at any time that works well for you Shown below is an example to configure the association to run every day at 10:00 PM
 
 ![](images/association-schedule.png)
@@ -182,11 +182,11 @@ Once an Association has been created it will trigger the first run. To ensure th
 
 ![](images/inventory-view.png)
 7. You can also verify the details of the Inventory data which can be found under Managed Instances.
-    i. Navigate to **Managed Instances** under Instances & Nodes.
-    ii.  For filter type **Custom : Custom:SQLServer.Edition : Standard Edition**. If no EC2 instances are available then change the edition value to any other editions
-    iii. Click on one of the **EC2 instances**
-    iv. Click on the **Inventory** tab
-    v. Under Inventory type, select **Custom:SQLServer **which should list out the SQL servers installed on the EC2 instance as shown below
+  1. Navigate to **Managed Instances** under Instances & Nodes.
+  2. For filter type **Custom : Custom:SQLServer.Edition : Standard Edition**. If no EC2 instances are available then change the edition value to any other editions
+  3. Click on one of the **EC2 instances**
+  4. Click on the **Inventory** tab
+  5. Under Inventory type, select **Custom:SQLServer **which should list out the SQL servers installed on the EC2 instance as shown below
 
 ![](images/custom-inventory.png)
 
