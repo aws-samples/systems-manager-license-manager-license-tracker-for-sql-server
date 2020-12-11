@@ -123,7 +123,7 @@ Next, you need to create an IAM role and attach this policy.
 
 With the IAM Role and Policy in place the next step is to create the Automation Document. 
 
-1. On the AWS Systems Manager console, select **Automation **under Actions & Change.
+1. On the AWS Systems Manager console, select **Automation** under Actions & Change.
 2. Click on **Execute automation**
 3. Click on **Create document**
 4. Select **Editor**
@@ -139,31 +139,31 @@ Let’s walk through each step executed in the document as illustrated below.
 
 1. **Assert instance eligibility (assertInstanceEligibility)**: this step checks if the EC2 instance is eligible for this document. The two criteria for this are - (i) is a SSM managed instance and is currently online, (ii) is running on a Windows operating system.
 2. **Remove old data if exists (removeInventoryAndLicenseConfigData)**: once we have asserted the eligibility we will need to perform two clean up tasks. Firstly, delete all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL [“Custom:SQLServer”] on all the EC2 instances. Secondly, we remove any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data in to both SSM Inventory and License Manager in case changes have been made.
-3. **Is SQL installed (isSQLServerInstalled): **in this step we check if MSSQL is installed and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the MSSQL instances.
-4. **Conditional logic (foundSQLServerInstalledBranch): **this step performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) out based on the evaluation of the previous step, defaulting to the next step if MSSQL exists on the EC2 instance, or otherwise exiting if unavailable.
-5. **Update SSM Inventory (updateInventory): **using the output of step 3 (metadata) we update SSM Inventory with a custom inventory of type “Custom:SQLServer” for the EC2 instance.
+3. **Is SQL installed (isSQLServerInstalled):** in this step we check if MSSQL is installed and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the MSSQL instances.
+4. **Conditional logic (foundSQLServerInstalledBranch):** this step performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) out based on the evaluation of the previous step, defaulting to the next step if MSSQL exists on the EC2 instance, or otherwise exiting if unavailable.
+5. **Update SSM Inventory (updateInventory):** using the output of step 3 (metadata) we update SSM Inventory with a custom inventory of type “Custom:SQLServer” for the EC2 instance.
 6. **Update License Manager (updateLicenseManager):** in this last step we determine the highest edition of SQL installed and accordingly update the License Manager Configuration associated with the EC2 instance.
 7. **End (exitIfNoSqlServerFound):** this step is triggered if there are no SQL instances found. 
 
 ## Create State Manager Association
 
-1. Navigate to **State Manager **under Instances & Nodes in AWS Systems Manager console
+1. Navigate to **State Manager** under Instances & Nodes in AWS Systems Manager console
 2. Click on **Create association**
 3. For **Name**, specify  `SQLServerLicenseTracker-Association`
-4. In the search/filter for **Document **specify `SQLServerLicenseTracker-Document` and select the corresponding document
+4. In the search/filter for **Document** specify `SQLServerLicenseTracker-Document` and select the corresponding document
 5. For Document version select **Default at runtime**
 6. Choose **Rate control**
 7. In the Targets section, select **InstanceId** for **Parameter** and **All Instances** for **Targets**
 8. Populate the following under **Input parameters**
-  1. Region: `<Region where the document was deployed in>`
-  2. AccountId: `<AWS Account ID where the document was deployed in>`
-  3. LicenseConfiguration(s): `<AWS License Manager Configuration ARN associated with the different editions of SQL instances>`
-  4. AutomationAssumeRole: select `SQLServerLicenseTracker-Role`
+    1. Region: `<Region where the document was deployed in>`
+    2. AccountId: `<AWS Account ID where the document was deployed in>`
+    3. LicenseConfiguration(s): `<AWS License Manager Configuration ARN associated with the different editions of SQL instances>`
+    4. AutomationAssumeRole: select `SQLServerLicenseTracker-Role`
 9. For Specify schedule we recommend using the **CRON schedule builder running every day** at any time that works well for you Shown below is an example to configure the association to run every day at 10:00 PM
 
 ![](images/association-schedule.png)
 
-10. For Rate Control we recommend setting **5** targets for **Concurrency** and **5 **errors for **Error threshold** 
+10. For Rate Control we recommend setting **5** targets for **Concurrency** and **5** errors for **Error threshold** 
 11. Click on **Create Association**
 
 ## Test the solution
@@ -182,11 +182,11 @@ Once an Association has been created it will trigger the first run. To ensure th
 
 ![](images/inventory-view.png)
 7. You can also verify the details of the Inventory data which can be found under Managed Instances.
-  1. Navigate to **Managed Instances** under Instances & Nodes.
-  2. For filter type **Custom : Custom:SQLServer.Edition : Standard Edition**. If no EC2 instances are available then change the edition value to any other editions
-  3. Click on one of the **EC2 instances**
-  4. Click on the **Inventory** tab
-  5. Under Inventory type, select **Custom:SQLServer **which should list out the SQL servers installed on the EC2 instance as shown below
+    1. Navigate to **Managed Instances** under Instances & Nodes.
+    2. For filter type **Custom : Custom:SQLServer.Edition : Standard Edition**. If no EC2 instances are available then change the edition value to any other editions
+    3. Click on one of the **EC2 instances**
+    4. Click on the **Inventory** tab
+    5. Under Inventory type, select **Custom:SQLServer** which should list out the SQL servers installed on the EC2 instance as shown below
 
 ![](images/custom-inventory.png)
 
