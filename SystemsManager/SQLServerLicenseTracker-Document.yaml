@@ -3,7 +3,7 @@ schemaVersion: '0.3'
 assumeRole: '{{ AutomationAssumeRole }}'
 outputs:
   - updateInventory.result
-  - updateLicenseManagerConfiguration.result
+  - updateLicenseManager.result
 parameters:
   InstanceId:
     type: String
@@ -272,8 +272,8 @@ mainSteps:
       - Name: result
         Selector: $.Payload.message
         Type: String
-    nextStep: updateLicenseManagerConfiguration
-  - name: updateLicenseManagerConfiguration
+    nextStep: updateLicenseManager
+  - name: updateLicenseManager
     description: 'In this last step we determine the highest edition of SQL installed and accordingly update the License Manager Configuration associated with the EC2 instance'
     action: 'aws:executeScript'
     isEnd: true
