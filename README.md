@@ -137,13 +137,13 @@ With the IAM Role and Policy in place the next step is to create the Automation 
 
 Let’s walk through each step executed in the document as illustrated below.
 
-1. **Assert instance eligibility (assertInstanceEligibility)**: this step checks if the EC2 instance is eligible for this document. The two criteria for this are - (i) is a SSM managed instance and is currently online, (ii) is running on a Windows operating system.
-2. **Remove old data if exists (removeInventoryAndLicenseConfigData)**: once we have asserted the eligibility we will need to perform two clean up tasks. Firstly, delete all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL [“Custom:SQLServer”] on all the EC2 instances. Secondly, we remove any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data in to both SSM Inventory and License Manager in case changes have been made.
-3. **Is SQL installed (isSQLServerInstalled):** in this step we check if MSSQL is installed and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the MSSQL instances.
-4. **Conditional logic (foundSQLServerInstalledBranch):** this step performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) out based on the evaluation of the previous step, defaulting to the next step if MSSQL exists on the EC2 instance, or otherwise exiting if unavailable.
-5. **Update SSM Inventory (updateInventory):** using the output of step 3 (metadata) we update SSM Inventory with a custom inventory of type “Custom:SQLServer” for the EC2 instance.
-6. **Update License Manager (updateLicenseManager):** in this last step we determine the highest edition of SQL installed and accordingly update the License Manager Configuration associated with the EC2 instance.
-7. **End (exitIfNoSqlServerFound):** this step is triggered if there are no SQL instances found. 
+1. **Assert instance eligibility (assertInstanceEligibility)**: this step checks if the EC2 instance is eligible for this document. The two criteria for this are - (i) is a SSM managed instance and is currently online, (ii) is running on a Windows operating system
+2. **Remove old data if exists (removeInventoryAndLicenseConfigData)**: once we have asserted the eligibility we will need to perform two clean up tasks. Firstly, delete all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL [“Custom:SQLServer”] on all the EC2 instances. Secondly, we remove any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data in to both SSM Inventory and License Manager in case changes have been made
+3. **Is SQL installed (isSQLServerInstalled):** in this step we check if MSSQL is installed and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the Microsoft SQL Servers
+4. **Conditional logic (foundSQLServerInstalledBranch):** this step performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) out based on the evaluation of the previous step, defaulting to the next step if Microsoft SQL Server exists on the EC2 instance, or otherwise exiting if unavailable.
+5. **Update SSM Inventory (updateInventory):** using the output of step 3 (metadata) we update SSM Inventory with a custom inventory of type “Custom:SQLServer” for the EC2 instance
+6. **Update License Manager (updateLicenseManager):** in this last step we determine the highest edition of SQL installed and accordingly update the License Manager Configuration associated with the EC2 instance
+7. **End (exitIfNoSqlServerFound):** this step is triggered if there are no SQL Server found 
 
 ## Create State Manager Association
 
@@ -182,7 +182,7 @@ Once an Association has been created it will trigger the first run. To ensure th
 
 ![](images/inventory-view.png)
 7. You can also verify the details of the Inventory data which can be found under Managed Instances.
-    1. Navigate to **Managed Instances** under Instances & Nodes.
+    1. Navigate to **Managed Instances** under Instances & Nodes
     2. For filter type **Custom : Custom:SQLServer.Edition : Standard Edition**. If no EC2 instances are available then change the edition value to any other editions
     3. Click on one of the **EC2 instances**
     4. Click on the **Inventory** tab
