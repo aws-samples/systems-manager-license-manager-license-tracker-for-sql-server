@@ -36,8 +36,8 @@ If you prefer to use a pre-configured CloudFormation template, launch the follow
 
 You need to create an IAM Policy that allows SSM to call other AWS services, such as EC2 and License Manager, to perform the required steps in the Automation Document.
 
-1. On the IAM console, choose **Policies**.
-2. Choose **Create policy**.
+1. On the IAM console, choose **Policies**
+2. Choose **Create policy**
 3. On the **JSON** tab, enter the following code (update the REGION, AWS-ACCOUNT-ID, and the ARN OF YOUR LICENSE CONFIGURATION accordingly, and the Document name/definition if you choose to change it):
 
 ```
@@ -95,28 +95,28 @@ You need to create an IAM Policy that allows SSM to call other AWS services, suc
 }
 ```
 
-4. Choose **Review policy**.
-5. For **Name**, type `SQLServerLicenseTracker-Policy`.
-6. For **Description**, enter `Policy used by (SSM) SQLServerLicenseTracker-Role to track SQL Server Licenses using License Manager`.
-7. Choose **Create policy**.
+4. Choose **Review policy**
+5. For **Name**, type `SQLServerLicenseTracker-Policy`
+6. For **Description**, enter `Policy used by (SSM) SQLServerLicenseTracker-Role to track SQL Server Licenses using License Manager`
+7. Choose **Create policy**
 
 Next, you need to create an IAM role and attach this policy.
 
-8. On the IAM console, choose **Roles**.
-9. Choose **Create role**.
-10. Select **AWS service**.
-11. Select **Systems Manager**.
-12. Choose **Systems Manager** under Select your use case as shown below.
+8. On the IAM console, choose **Roles**
+9. Choose **Create role**
+10. Select **AWS service**
+11. Select **Systems Manager**
+12. Choose **Systems Manager** under Select your use case as shown below
 
 ![](images/console-view.png)
 
-13. Choose **Next: Permissions**.
+13. Choose **Next: Permissions**
 14. For **Filter policies**, enter `SQLServerLicenseTracker-Policy`
-15. Choose **Next: Tags**.
-16. Choose **Next: Review**.
-17. For **Role name**, specify `SQLServerLicenseTracker-Role`.
-18. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`.
-19. Choose **Create role**.
+15. Choose **Next: Tags**
+16. Choose **Next: Review**
+17. For **Role name**, specify `SQLServerLicenseTracker-Role`
+18. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`
+19. Choose **Create role**
 
 
 ## Create Automation Document
@@ -178,10 +178,11 @@ Once an Association has been created it will trigger the first run. To ensure th
 
 ![](images/association-result.png)
 
-6. Next we will verify if SSM inventory has been updated. To do this navigate to **Inventory** under Instances & Nodes. You should see a new entry ‘**SQLServer**’ in Top 10 Custom inventory types graph as shown below.
+6. Next we will verify if SSM inventory has been updated. To do this navigate to **Inventory** under Instances & Nodes. You should see a new entry ‘**SQLServer**’ in Top 10 Custom inventory types graph as shown below
 
 ![](images/inventory-view.png)
-7. You can also verify the details of the Inventory data which can be found under Managed Instances.
+
+7. You can also verify the details of the Inventory data which can be found under Managed Instances
     1. Navigate to **Managed Instances** under Instances & Nodes
     2. For filter type **Custom : Custom:SQLServer.Edition : Standard Edition**. If no EC2 instances are available then change the edition value to any other editions
     3. Click on one of the **EC2 instances**
@@ -190,10 +191,11 @@ Once an Association has been created it will trigger the first run. To ensure th
 
 ![](images/custom-inventory.png)
 
-8. Lastly, we will verify if the License Configuration has been updated with the latest inventory check done by our solution. Navigate to AWS License Manager console.
-9. Go through each of the configurations to see if they have been updated as shown below.
+8. Lastly, we will verify if the License Configuration has been updated with the latest inventory check done by our solution. Navigate to AWS License Manager console
+9. Go through each of the configurations to see if they have been updated as shown below
 
 ![](images/customer-managed-licenses.png)
+
 
 ![](images/license-manager-configuration-example.png)
 
