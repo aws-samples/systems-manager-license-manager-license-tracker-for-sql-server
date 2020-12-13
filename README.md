@@ -63,8 +63,8 @@ You need to create an IAM Policy that allows SSM to call other AWS services, suc
             ],
             "Resource": [
                 "arn:aws:ec2:*:<AWS-ACCOUNT-ID>:instance/*",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/SQLLicenseTrackingSolution-Document:VersionId}",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/SQLLicenseTrackingSolution-Document",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/SQLServerLicenseTracker-Document:VersionId}",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/SQLServerLicenseTracker-Document",
                 "arn:aws:ssm:<REGION>:*:document/AWS-RunPowerShellScript"
             ]
         },
@@ -72,7 +72,7 @@ You need to create an IAM Policy that allows SSM to call other AWS services, suc
             "Sid": "sid2",
             "Effect": "Allow",
             "Action": "ssm:StartAutomationExecution",
-            "Resource": "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/SQLLicenseTrackingSolution-Document:VersionId}"
+            "Resource": "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/SQLServerLicenseTracker-Document:VersionId}"
         },
         {
             "Sid": "sid3",
