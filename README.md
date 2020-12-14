@@ -97,7 +97,7 @@ You need to create an IAM Policy that allows SSM to call other AWS services, suc
 
 4. Choose **Review policy**
 5. For **Name**, type `SQLServerLicenseTracker-Policy`
-6. For **Description**, enter `Policy used by (SSM) SQLServerLicenseTracker-Role to track SQL Server Licenses using License Manager`
+6. For **Description**, enter `Policy used by SSM and License Manager to track your SQL Server licenses using License Manager`
 7. Choose **Create policy**
 
 Next, you need to create an IAM role and attach this policy.
@@ -204,7 +204,7 @@ Once an Association has been created it will trigger the first run. To ensure th
 
 In this post, we demonstrated how you can automate the process of tracking your Microsoft SQL Server Licenses to help stay compliant with your licensing agreements using a combination of AWS License Manager and AWS Systems Manager. The same solution can be extended for other software products.
 
-AWS License Manager allows you to track your commercial license usage and keep compliant across your enterprise teams. AWS License Manager does this through associating license definitions with AMIs from which instances are launched. AWS License Manager can also auto-discover licensed software, such as Microsoft SQL Server, that’s installed on instances after initial instance deployment. The solution introduced in this blog post enhances this capability by auto-discovery and addition of further details such as license edition. This allows you to differentiate between the various editions of SQL Server while accounting your procured and used licenses.
+AWS License Manager allows you to track your commercial license usage and keep compliant across your enterprise teams. AWS License Manager does this through associating license definitions with AMIs from which instances are launched. AWS License Manager can also auto-discover licensed software, such as Microsoft SQL Server, that’s installed on instances after initial instance deployment. The solution introduced in this blog post enhances this capability by auto-discovery and addition of further details such as license edition. This allows you to differentiate between the various editions of SQL Server while accounting for your procured and used licenses.
 
 This solution has been developed for a single account in a region however it can easily be expanded to work across multiple regions in a multi-account setup as well, refer to [Running automations in multiple AWS Regions and accounts](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation-multiple-accounts-and-regions.html). 
 
