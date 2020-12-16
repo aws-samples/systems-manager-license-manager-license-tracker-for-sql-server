@@ -24,7 +24,7 @@ To implement this solution, we need to complete the following steps:
 
 1. Create the required IAM service role and policy to allow SSM to call other AWS services on your behalf
 2. Create the SSM Automation Document
-3. Create a SSM State Manger Association which invokes the Automation Document
+3. Create a SSM State Manger association which invokes the Automation Document
 4. Test the solution
 
 
@@ -159,7 +159,7 @@ Let’s walk through each step executed in the document as illustrated below.
     2. AccountId: `<AWS Account ID where the document was deployed in>`
     3. LicenseConfiguration(s): `<AWS License Manager Configuration ARN associated with the different editions of SQL instances>`
     4. AutomationAssumeRole: select `SQLServerLicenseTracker-Role`
-9. For Specify schedule we recommend using the **CRON schedule builder running every day** at any time that works well for you Shown below is an example to configure the association to run every day at 10:00 PM
+9. For **Specify schedule** we recommend using the **CRON schedule builder running every day** at any time that works well for you. Shown below is an example to configure the association to run every day at 10:00 PM
 
 ![](images/association-schedule.png)
 
@@ -168,13 +168,13 @@ Let’s walk through each step executed in the document as illustrated below.
 
 ## Test the solution
 
-Once an Association has been created it will trigger the first run. To ensure the solution has been deployed correctly we will perform a few checks.
+Once an association has been created it will trigger the first run. To ensure the solution has been deployed correctly we will perform a few checks.
 
 1. Navigate to **State Manager** in the AWS Systems Manager console
 2. Search for `SQLServerLicenseTracker-Association` and click on the corresponding **Association id**
 3. Select the **Execution history**
 4. Click on the first **Execution id**
-5. You should see a list of EC2 instances against which the Association was invoked as shown below. Click on the **Output** for a few instances to see the execution details
+5. You should see a list of EC2 instances against which the association was invoked as shown below. Click on the **Output** for a few instances to see the execution details
 
 ![](images/association-result.png)
 
@@ -207,4 +207,3 @@ In this post, we demonstrated how you can automate the process of tracking your 
 AWS License Manager allows you to track your commercial license usage and keep compliant across your enterprise teams. AWS License Manager does this through associating license definitions with AMIs from which instances are launched. AWS License Manager can also auto-discover licensed software, such as Microsoft SQL Server, that’s installed on instances after initial instance deployment. The solution introduced in this blog post enhances this capability by auto-discovery and addition of further details such as license edition. This allows you to differentiate between the various editions of SQL Server while accounting for your procured and used licenses.
 
 This solution has been developed for a single account in a region however it can easily be expanded to work across multiple regions in a multi-account setup as well, refer to [Running automations in multiple AWS Regions and accounts](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation-multiple-accounts-and-regions.html). 
-
