@@ -1,4 +1,4 @@
-# Auto-track BYOL instances of SQL Server, using AWS Systems Manager and AWS License Manager
+# Automatically discover SQL Server BYOL with AWS License Manager and AWS Systems Manager
 
 
 Most enterprises find it hard to maintain control over commercial licensing of products like Microsoft SQL Server, Oracle, SAP and IBM due to limited visibility. Akin to challenges with provisioning their own infrastructure most customers either end up over-provisioning licenses to avoid any hassle or under-provisioning only to be faced with steep penalties. Enterprises using AWS can address this challenge in two ways:
