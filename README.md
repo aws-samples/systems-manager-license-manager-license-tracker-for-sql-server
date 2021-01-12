@@ -1,7 +1,7 @@
 # Automatically discover SQL Server BYOL with AWS License Manager and AWS Systems Manager
 
 
-Most enterprises find it hard to maintain control over commercial licensing of products like Microsoft SQL Server, Oracle, SAP and IBM due to limited visibility. Akin to challenges with provisioning their own infrastructure most customers either end up over-provisioning licenses to avoid any hassle or under-provisioning only to be faced with steep penalties. Enterprises using AWS can address this challenge in two ways:
+Most enterprises find it hard to maintain control over commercial licensing of products from software vendors such as Microsoft, SAP, Oracle, and IBM due to limited visibility. Akin to challenges with provisioning their own infrastructure most customers either end up over-provisioning licenses to avoid any hassle or under-provisioning only to be faced with steep penalties. Enterprises using AWS can address this challenge in two ways:
 
 1. Using license included instances allowing them access to fully compliant licenses, where tracking and management is being taken care of by AWS. With this option you only pay for it as you go with no upfront costs or long-term investments
 2. [AWS License Manager](https://aws.amazon.com/systems-manager/features/) makes it easy for you to set rules to manage, discover and report software license usage. Using AWS License Manager to associate an Amazon Machine Image (AMI) with a licensing configuration, you can track use of licenses that you own and use in AWS or on-premises. Additionally you can set rules within License Manager to prevent licensing violations to help you stay compliant
