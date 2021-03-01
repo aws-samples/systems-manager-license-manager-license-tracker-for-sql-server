@@ -1,0 +1,74 @@
+description: Primary document for SQL License Tracking Solution
+schemaVersion: '0.3'
+assumeRole: '{{ AutomationAssumeRole }}'
+parameters:
+  Region:
+    type: String
+    description: (Required) Specify the AWS Region where you are deploying this document
+  AccountId:
+    type: String
+    description: (Required) Specify the AWS Account ID where you are deploying this document
+    default: '{{global:ACCOUNT_ID}}'
+  SQLServerEELicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Enterprise Edition
+    default: ''
+  SQLServerEXPLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Express Edition
+    default: ''
+  SQLServerSTDLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Standard Edition
+    default: ''
+  SQLServerWEBLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Web Edition
+    default: ''
+  SQLServerDEVLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Developer Edition
+    default: ''
+  AutomationAssumeRole:
+    type: String
+    description: 'The IAM role for this execution. If no role is specified, then AWS Systems Manager Automation will be unable to complete the executeScript step.'
+    default: 'arn:aws:iam::{{global:ACCOUNT_ID}}:role/SQLServerLicenseTracker-Role'
+mainSteps:
+  - name: deleteCustomInventory
+    action: 'aws:executeAwsApi'
+    inputs:
+      Api: DeleteInventory
+      Service: ssm
+      TypeName: 'Custom:SQLServer'
+    outputs:
+      - Name: message
+        Selector: $.Payload.message
+        Type: String
+  - name: invokeSecondarySQLLicenseTrackingSolutionDocument
+    action: 'aws:executeAwsApi'
+    inputs:
+      Service: ssm
+      Api: StartAutomationExecution
+      DocumentName: Secondary-SQLLicenseTrackingSolution-Document
+      Parameters:
+        Region:
+          - '{{ Region }}'
+        AccountId:
+          - '{{ AccountId }}'
+        SQLServerEELicenseConfiguration:
+          - '{{ SQLServerEELicenseConfiguration }}'
+        SQLServerEXPLicenseConfiguration:
+          - '{{ SQLServerEXPLicenseConfiguration }}'
+        SQLServerSTDLicenseConfiguration:
+          - '{{ SQLServerSTDLicenseConfiguration }}'
+        SQLServerWEBLicenseConfiguration:
+          - '{{ SQLServerWEBLicenseConfiguration }}'
+        SQLServerDEVLicenseConfiguration:
+          - '{{ SQLServerDEVLicenseConfiguration }}'
+        AutomationAssumeRole:
+          - '{{ AutomationAssumeRole }}'
+      TargetParameterName: InstanceId
+      Targets:
+        - Key: InstanceIds
+          Values:
+            - '*'
