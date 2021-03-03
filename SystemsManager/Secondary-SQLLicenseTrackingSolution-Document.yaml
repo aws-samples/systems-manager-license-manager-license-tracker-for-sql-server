@@ -19,27 +19,21 @@ parameters:
   SQLServerEELicenseConfiguration:
     type: String
     description: (Optional) License Configuration ARN for SQL Enterprise Edition
-    default: ''
   SQLServerSTDLicenseConfiguration:
     type: String
     description: (Optional) License Configuration ARN for SQL Standard Edition
-    default: ''
   SQLServerWEBLicenseConfiguration:
     type: String
     description: (Optional) License Configuration ARN for SQL Web Edition
-    default: ''
   SQLServerEXPLicenseConfiguration:
     type: String
     description: (Optional) License Configuration ARN for SQL Express Edition
-    default: ''
   SQLServerDEVLicenseConfiguration:
     type: String
     description: (Optional) License Configuration ARN for SQL Developer Edition
-    default: ''
   AutomationAssumeRole:
     type: String
     description: '(Required) The IAM role for this execution. If no role is specified, then AWS Systems Manager will be unable to complete the execution of this document.'
-    default: ''
 mainSteps:
   - name: removeLicenseConfigDataForInstance
     action: 'aws:executeScript'
