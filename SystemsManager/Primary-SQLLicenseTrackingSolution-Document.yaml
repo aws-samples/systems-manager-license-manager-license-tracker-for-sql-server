@@ -2,7 +2,7 @@ description: Primary document for SQL License Tracking Solution
 schemaVersion: '0.3'
 assumeRole: '{{ AutomationAssumeRole }}'
 outputs:
-  - invokeSecondarySQLLicenseTrackingSolutionDocument.result
+  - invokeSecondarySQLLicenseTrackingSolutionAutomation.result
 parameters:
   InstanceId:
     type: String
@@ -42,17 +42,19 @@ parameters:
     default: 'arn:aws:iam::{{global:ACCOUNT_ID}}:role/SQLServerLicenseTracker-Role'
 mainSteps:
   - name: deleteCustomInventory
+    description: This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances. 
     action: 'aws:executeAwsApi'
     inputs:
       Api: DeleteInventory
       Service: ssm
       TypeName: 'Custom:SQLServer'
-    nextStep: invokeSecondarySQLLicenseTrackingSolutionDocument
+    nextStep: invokeSecondarySQLLicenseTrackingSolutionAutomation
     outputs:
       - Name: result
         Selector: $.Payload.message
         Type: String
-  - name: invokeSecondarySQLLicenseTrackingSolutionDocument
+  - name: invokeSecondarySQLLicenseTrackingSolutionAutomation
+    description: This step invokes the SecondarySQLLicenseTrackingSolutionDocument automation
     action: 'aws:executeScript'
     inputs:
       Runtime: python3.7

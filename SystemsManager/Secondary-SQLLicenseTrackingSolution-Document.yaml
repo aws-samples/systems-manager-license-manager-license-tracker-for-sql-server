@@ -10,11 +10,11 @@ parameters:
     description: The ID of the EC2 instance
   Region:
     type: String
-    description: (Required) Specify the AWS Region where you are deploying this document
+    description: (Optional) Specify the AWS Region where you are deploying this document otherwise the region in which this document is executed will be used
     default: '{{global:REGION}}'
   AccountId:
     type: String
-    description: (Required) Specify the AWS Account ID where you are deploying this document
+    description: (Optional) Specify the AWS Account ID where you are deploying this document otherwise the account in which this document is executed will be used
     default: '{{global:ACCOUNT_ID}}'
   SQLServerEELicenseConfiguration:
     type: String
@@ -43,7 +43,7 @@ parameters:
 mainSteps:
   - name: removeLicenseConfigDataForInstance
     action: 'aws:executeScript'
-    description: This step performs a clean up tasks. Removing any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data to License Manager in case changes have been made
+    description: This step performs a clean up task. Removing any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data to License Manager in case changes have been made
     inputs:
       Runtime: python3.7
       Handler: script_handler
