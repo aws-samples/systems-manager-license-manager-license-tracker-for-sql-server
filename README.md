@@ -1,44 +1,50 @@
 # Automatically discover SQL Server BYOL with AWS License Manager and AWS Systems Manager
 
 
-Most enterprises find it hard to maintain control over commercial licensing of products from software vendors such as Microsoft, SAP, Oracle, and IBM due to limited visibility. Akin to challenges with provisioning their own infrastructure most customers either end up over-provisioning licenses to avoid any hassle or under-provisioning only to be faced with steep penalties. Enterprises using AWS can address this challenge in two ways:
+Most enterprises find it hard to maintain control of the commercial licensing of Microsoft, SAP, Oracle, and IBM products due to limited visibility. They wind up over-provisioning licenses to avoid any hassle or under-provisioning licenses, only to be faced with steep penalties. 
 
-1. Using license included instances allowing them access to fully compliant licenses, where tracking and management is being taken care of by AWS. With this option you only pay for it as you go with no upfront costs or long-term investments
-2. [AWS License Manager](https://aws.amazon.com/systems-manager/features/) makes it easy for you to set rules to manage, discover and report software license usage. Using AWS License Manager to associate an Amazon Machine Image (AMI) with a licensing configuration, you can track use of licenses that you own and use in AWS or on-premises. Additionally you can set rules within License Manager to prevent licensing violations to help you stay compliant
+If your enterprise uses AWS, you can address this challenge in two ways:
 
-However, it’s still possible that teams could end up provisioning software products which might not be governed by the two options described above. This could result in unwanted surprises in the next audit. In this blog post, we show you how you can build a solution that automatically discovers and tracks your software assets. We have focused on Microsoft SQL Server in this blog, however, you can employ the same approach to target other commercial software such as Oracle, SAP, or IBM.
+•	Using license-included instances allows you access to fully compliant licenses, where AWS handles the tracking and management for you. With this option, you pay as you go, with no upfront costs or long-term investment.
+•	[AWS License Manager](https://aws.amazon.com/systems-manager/features/) makes it easy for you to set rules to manage, discover, and report software license usage. When you use AWS License Manager to associate an Amazon Machine Image (AMI) with a licensing configuration, you can track the use of licenses in AWS or your on-premises environment. You can also set rules in AWS License Manager to prevent licensing violations to help you stay compliant.
 
-# Overview of the solution
+It’s still possible that your teams might provision software products not governed by these two options, which means you could receive an unwanted surprise in the next audit. 
 
-The following diagram illustrates the solution architecture built in this blog post. Along with AWS License Manger the solution leverages the following [features](https://aws.amazon.com/systems-manager/features/) of [AWS Systems Manager](https://aws.amazon.com/systems-manager/) (SSM):
+In this blog post, we show you how to build a solution that discovers and tracks your SQL Server instances. You can use the approach in this solution to target other commercial software such as Oracle, SAP, or IBM.
 
-* Automation forms the crux of this solution and orchestrates the entire workflow.
-* State Manager helps maintain consistent configuration of your fleet and is used to invoke the Automation Document on a user-defined frequency.
-* Inventory maintains all the information collected about the instances and the Microsoft SQL Server editions running on them.
+
+# Solution overview
+
+AWS License Manager allows you to track your commercial license usage to stay compliant across your enterprise teams. It associates license definitions with AMIs from which instances are launched. AWS License Manager can also auto-discover licensed software (in this solution, Microsoft SQL Server) that’s installed on instances after initial instance deployment. The solution described in this blog post enhances the auto-discovery capability and provides license edition details. 
+
+In addition to AWS License Manager, the solution uses the following [AWS Systems Manager](https://aws.amazon.com/systems-manager/) features:
+•	[Automation] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html) orchestrates the entire workflow.
+•	[State Manager] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state.html) invokes the Automation document on a user-defined frequency.
+•	[Inventory] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-inventory.html) maintains all the information collected about the instances and the Microsoft SQL Server editions running on them.
+
 
 ![](images/architecture.png)
+Figure 1 shows the solution architecture.
+
 
 # Walkthrough
 
 To implement this solution, we need to complete the following steps:
 
-1. Create the required IAM service role and policy to allow SSM to call other AWS services on your behalf
-2. Create the SSM Automation Document
-3. Create a SSM State Manger association which invokes the Automation Document
-4. Test the solution
+1.	Create the IAM service role and policy required to allow AWS Systems Manager to call other AWS services on your behalf.
+2.	Create the Automation documents.
+3.	Create a State Manager association, which invokes the Automation document.
+4.	Test the solution.
 
-
-If you prefer to use a pre-configured CloudFormation template, launch the following stack.
+If you prefer to use a [CloudFormation template] (https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTracker-template.yaml) to create these resources, launch the following stack.
 
 [![cfn-stack](images/cfn-stack.png)]((https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTracker-CFnTemplate.yaml))
 
-## Create IAM service role and policy
+## Create an IAM service role and policy
 
-You need to create an IAM Policy that allows SSM to call other AWS services, such as EC2 and License Manager, to perform the required steps in the Automation Document.
-
-1. On the IAM console, choose **Policies**
-2. Choose **Create policy**
-3. On the **JSON** tab, enter the following code (update the REGION, AWS-ACCOUNT-ID, and the ARN OF YOUR LICENSE CONFIGURATION accordingly, and the Document name/definition if you choose to change it):
+Create an IAM policy that allows Systems Manager to call other AWS services, such as Amazon Elastic Compute Cloud (Amazon EC2) and AWS License Manager, to perform the steps in the Automation document.
+1.	In the AWS Identity and Access Management console, choose Policies, and then choose Create policy.
+2.	On the JSON tab, enter the following code. Supply values for **REGION**, **AWS-ACCOUNT-ID**, and **ARN OF YOUR LICENSE CONFIGURATION**. You can change the definition name if you like.
 
 ```
 
@@ -63,16 +69,18 @@ You need to create an IAM Policy that allows SSM to call other AWS services, suc
             ],
             "Resource": [
                 "arn:aws:ec2:*:<AWS-ACCOUNT-ID>:instance/*",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/SQLServerLicenseTracker-Document:VersionId}",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/SQLServerLicenseTracker-Document",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Primary-SQLServerLicenseTracker-Document:VersionId}",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Primary-SQLServerLicenseTracker-Document",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Secondary-SQLServerLicenseTracker-Document:VersionId}",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Secondary-SQLServerLicenseTracker-Document",
                 "arn:aws:ssm:<REGION>:*:document/AWS-RunPowerShellScript"
             ]
         },
         {
             "Sid": "sid2",
             "Effect": "Allow",
-            "Action": "ssm:StartAutomationExecution",
-            "Resource": "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/SQLServerLicenseTracker-Document:VersionId}"
+            "Action": "iam:PassRole",
+            "Resource": "arn:aws:iam::${AWS::AccountId}:role/SQLServerLicenseTracker-Role"
         },
         {
             "Sid": "sid3",
@@ -96,114 +104,121 @@ You need to create an IAM Policy that allows SSM to call other AWS services, suc
 ```
 
 4. Choose **Review policy**
-5. For **Name**, type `SQLServerLicenseTracker-Policy`
+5. For **Name**, enter `SQLServerLicenseTracker-Policy`
 6. For **Description**, enter `Policy used by SSM and License Manager to track your SQL Server licenses using License Manager`
 7. Choose **Create policy**
-
-Next, you need to create an IAM role and attach this policy.
-
-8. On the IAM console, choose **Roles**
-9. Choose **Create role**
-10. Select **AWS service**
-11. Select **Systems Manager**
-12. Choose **Systems Manager** under Select your use case as shown below
+8. Next, you need to create an IAM role. In the IAM console, choose **Roles**, and then choose **Create role**
+9. On the **Select role type** page, choose **AWS service**, and then choose **Systems Manager**
+10. Under **Select your use case**, choose **Systems Manager**
 
 ![](images/console-view.png)
+Figure 2: Creating an IAM role
 
 13. Choose **Next: Permissions**
 14. For **Filter policies**, enter `SQLServerLicenseTracker-Policy`
 15. Choose **Next: Tags**
 16. Choose **Next: Review**
-17. For **Role name**, specify `SQLServerLicenseTracker-Role`
+17. For **Role name**, enter `SQLServerLicenseTracker-Role`
 18. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`
 19. Choose **Create role**
 
 
-## Create Automation Document
+## Create the Automation Documents
 
-With the IAM Role and Policy in place the next step is to create the Automation Document. 
-
-1. On the AWS Systems Manager console, select **Automation** under Actions & Change.
-2. Click on **Execute automation**
-3. Click on **Create document**
-4. Select **Editor**
-5. For **Name**, specify  `SQLServerLicenseTracker-Document`
-6. Click on **Edit** of the Document editor
-7. Select **OK** in the confirmation prompt
-8. Delete the existing content and paste the content from [SQLServerLicenseTracker-Document](SystemsManager/SQLServerLicenseTracker-Document.yaml)
-9. Click on **Create automation**. Verify that the newly created document is populated under **Owned by me** section
+1.	In the AWS Systems Manager console, under **Actions & Change**, choose **Automation**.
+2.	Choose **Execute automation**, choose **Create document**, and then choose **Editor**.
+3.	For **Name**, enter  `Primary-SQLServerLicenseTracker-Document`.
+4.	In the editor, choose **Edit**, and then choose **OK** to confirm.
+5.	Delete the existing content and paste the contents of [Primary-SQLServerLicenseTracker-Document.yaml] (SystemsManager/Primary-SQLServerLicenseTracker-Document.yaml).
+6.	Choose **Create automation**, and then verify that the newly created document is displayed under Owned by me.
+7.	Follow the same steps described above to create the secondary Automation document - `Secondary-SQLServerLicenseTracker-Document` using the contents of [Secondary-SQLServerLicenseTracker-Document.yaml] (SystemsManager/Secondary-SQLServerLicenseTracker-Document.yaml).
 
 ![](images/workflow.png)
+Figure 3: Execution sequence of Automation document 
 
-Let’s walk through each step executed in the document as illustrated below.
+The steps in the primary document are executed in the following order.
+1.	**Remove old Custom Inventory (deleteCustomInventory)**: This clean up task deletes all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL [Custom:SQLServer] on all the EC2 instances. 
+2.	**Invoke Secondary Document (invokeSecondarySQLLicenseTrackingSolutionDocument)**: This step invokes the SecondarySQLLicenseTrackingSolutionDocument automation
 
-1. **Assert instance eligibility (assertInstanceEligibility)**: this step checks if the EC2 instance is eligible for this document. The two criteria for this are - (i) is a SSM managed instance and is currently online, (ii) is running on a Windows operating system
-2. **Remove old data if exists (removeInventoryAndLicenseConfigData)**: once we have asserted the eligibility we will need to perform two clean up tasks. Firstly, delete all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL [“Custom:SQLServer”] on all the EC2 instances. Secondly, we remove any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data in to both SSM Inventory and License Manager in case changes have been made
-3. **Is SQL installed (isSQLServerInstalled):** in this step we check if MSSQL is installed and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the Microsoft SQL Servers
-4. **Conditional logic (foundSQLServerInstalledBranch):** this step performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) out based on the evaluation of the previous step, defaulting to the next step if Microsoft SQL Server exists on the EC2 instance, or otherwise exiting if unavailable.
-5. **Update SSM Inventory (updateInventory):** using the output of step 3 (metadata) we update SSM Inventory with a custom inventory of type “Custom:SQLServer” for the EC2 instance
-6. **Update License Manager (updateLicenseManager):** in this last step we determine the highest edition of SQL installed and accordingly update the License Manager Configuration associated with the EC2 instance
-7. **End (exitIfNoSqlServerFound):** this step is triggered if there are no SQL Server found 
 
-## Create State Manager Association
+The steps in the secondary document are executed in the following order.
 
-1. Navigate to **State Manager** under Instances & Nodes in AWS Systems Manager console
-2. Click on **Create association**
-3. For **Name**, specify  `SQLServerLicenseTracker-Association`
-4. In the search/filter for **Document** specify `SQLServerLicenseTracker-Document` and select the corresponding document
-5. For Document version select **Default at runtime**
-6. Choose **Rate control**
-7. In the Targets section, select **InstanceId** for **Parameter** and **All Instances** for **Targets**
-8. Populate the following under **Input parameters**
-    1. Region: `<Region where the document was deployed in>`
-    2. AccountId: `<AWS Account ID where the document was deployed in>`
-    3. LicenseConfiguration(s): `<AWS License Manager Configuration ARN associated with the different editions of SQL instances>`
-    4. AutomationAssumeRole: select `SQLServerLicenseTracker-Role`
-9. For **Specify schedule** we recommend using the **CRON schedule builder running every day** at any time that works well for you. Shown below is an example to configure the association to run every day at 10:00 PM
+1.	**Remove old License Manager data (removeLicenseConfigDataForInstance)**: This step performs a clean-up task, removing any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data to License Manager in case changes have been made. 
+2.	**Assert instance eligibility (assertInstanceEligibility)**: Checks if the EC2 instance is eligible for this document. The two criteria are:
+  •	The instance is managed by Systems Manager and currently online.
+  •	The instance is running on a Windows operating system.
+3.	**Is BYOL SQL installed (isBYOLSQLServerInstalled)*: Checks if Microsoft SQL Server is installed, is not a SQL Server License Included instance and if it exists then retrieve the SQL Server(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the SQL Servers 
+4.	**Conditional logic (foundSQLServerInstalledBranch)**: Performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) action based on the evaluation of the previous step. Defaults to the next step if MSSQL exists on the EC2 instance. Exits if unavailable.
+5.	**Update SSM Inventory (updateInventory)**: Uses the output of step 3 (metadata) to update Inventory with a custom inventory of type Custom:SQLServer for the EC2 instance.
+6.	**Update AWS License Manager (updateLicenseManager)**: Determines the most recent edition of SQL Server installed and updates the AWS License Manager configuration associated with the EC2 instance accordingly.
+7.	**End (exitIfNoSqlServerFound)**: Is triggered if no SQL Server instances are found. 
+
+## Create State Manager association
+
+1.	In the AWS Systems Manager console, under Instances & Nodes, choose State Manager, and then choose Create association.
+2.	For Name, enter  SQLServerLicenseTracker-Association.
+3.	In the search field, enter Primary-SQLServerLicenseTracker-Document, and then choose it in the results.
+4.	For Document version, choose Default at runtime.
+5.	Choose Simple execution. 
+6.	Under Input parameters, enter the following:
+  •	InstanceId: `<Specify the instance IDs that you want to target as comma-separated values (i-02573cafcfEXAMPLE,i-0471e04240EXAMPLE) or use * to target all instance>`
+  •	Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
+  •	AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
+  •	LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
+  •	AutomationAssumeRole: choose `SQLServerLicenseTracker-Role`
+9.	For Specify schedule, you can either choose **CRON schedule builder** to run at your preferred time or **No schedule** to run the association once. In Figure 4, we configured the association to run once.
 
 ![](images/association-schedule.png)
+Figure 4: Configuring the execution schedule 
 
-10. For Rate Control we recommend setting **5** targets for **Concurrency** and **5** errors for **Error threshold** 
-11. Click on **Create Association**
+10. Choose **Create Association**
 
 ## Test the solution
 
-Once an association has been created it will trigger the first run. To ensure the solution has been deployed correctly we will perform a few checks.
+After an association has been created, it will trigger the first run of the document. To ensure the solution has been deployed correctly, perform the following checks.
 
-1. Navigate to **State Manager** in the AWS Systems Manager console
-2. Search for `SQLServerLicenseTracker-Association` and click on the corresponding **Association id**
-3. Select the **Execution history**
-4. Click on the first **Execution id**
-5. You should see a list of EC2 instances against which the association was invoked as shown below. Click on the **Output** for a few instances to see the execution details
+1.	In the AWS Systems Manager console, under **Instances & Nodes**, choose **State Manager**.
+2.	Search for `SQLServerLicenseTracker-Association`, and then choose the association ID.
+3.	Choose **Execution history**, and then choose the latest execution ID, and then click on the **Output** icon.
+4.	Figure 5 shows a successful execution of the primary document.
 
-![](images/association-result.png)
+![](images/primary-document-execution.png)
+Figure 5: Primary document execution 
 
-6. Next we will verify if SSM inventory has been updated. To do this navigate to **Inventory** under Instances & Nodes. You should see a new entry ‘**SQLServer**’ in Top 10 Custom inventory types graph as shown below
+5.	Using the AutomationExecutionID displayed in the **Outputs** section search for Execution ID under **Automation executions** in the Automation dashboard as shown in Figure 6.
 
-![](images/inventory-view.png)
+![](images/automation-execution-search.png)
+Figure 6: Automation execution search
 
-7. You can also verify the details of the Inventory data which can be found under Managed Instances
-    1. Navigate to **Managed Instances** under Instances & Nodes
-    2. For filter type **Custom : Custom:SQLServer.Edition : Standard Edition**. If no EC2 instances are available then change the edition value to any other editions
-    3. Click on one of the **EC2 instances**
-    4. Click on the **Inventory** tab
-    5. Under Inventory type, select **Custom:SQLServer** which should list out the SQL servers installed on the EC2 instance as shown below
+6.	Clicking on the **Execution ID** will list out all the instances the secondary document has been targeted against as shown in Figure 7. For more details on individual instances click on the appropriate **Step ID**.
+
+![](images/state-manager-association.png)
+Figure 7: Automation execution search
+
+7.	Under **Node Management**, choose **Inventory**. In the **Top 10 Custom inventory types** window, you should see `SQLServer`, as shown in Figure 8.
+
+![](images/inventory-dashboard.png)
+Figure 8: Automation execution search
+
+8.	For filter type, use **Custom : Custom:SQLServer.Edition : Standard Edition** in the search bar. At the bottom of the Inventory dashboard you should see a list of corresponding managed instances. If no EC2 instances are available, change the edition value to one of the other editions.
+9.	Click on one of the instance IDs, and then choose the **Inventory** tab.
+10.	Under **Inventory type**, choose **Custom:SQLServer**. The SQL Server version, edition, and name is displayed, as shown in Figure 7.
 
 ![](images/custom-inventory.png)
+Figure 9: Custom:SQLServer Inventory type
 
-8. Lastly, we will verify if the License Configuration has been updated with the latest inventory check done by our solution. Navigate to AWS License Manager console
-9. Go through each of the configurations to see if they have been updated as shown below
+11.	Open the AWS License Manager console to confirm that the license configuration has been updated by the solution. 
+12.	In **Customer managed licenses**, review the configurations to see if they have been updated, as shown in Figure 10.
 
 ![](images/customer-managed-licenses.png)
+Figure 10: Cusomter-managed license configurations
 
+13. Choose any of the **License configuration name** which has more than 1 license consumed. All the associated instances will be listed under **Resources**, as shown in Figure 11.
 
 ![](images/license-manager-configuration-example.png)
+Figure 11: Associated resources for the customer-managed license configuration
 
 
 ## Conclusion
 
-In this post, we demonstrated how you can automate the process of tracking your Microsoft SQL Server Licenses to help stay compliant with your licensing agreements using a combination of AWS License Manager and AWS Systems Manager. The same solution can be extended for other software products.
-
-AWS License Manager allows you to track your commercial license usage and keep compliant across your enterprise teams. AWS License Manager does this through associating license definitions with AMIs from which instances are launched. AWS License Manager can also auto-discover licensed software, such as Microsoft SQL Server, that’s installed on instances after initial instance deployment. The solution introduced in this blog post enhances this capability by auto-discovery and addition of further details such as license edition. This allows you to differentiate between the various editions of SQL Server while accounting for your procured and used licenses.
-
-This solution has been developed for a single account in a region however it can easily be expanded to work across multiple regions in a multi-account setup as well, refer to [Running automations in multiple AWS Regions and accounts](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation-multiple-accounts-and-regions.html). 
+In this post, we showed how you can use AWS License Manager and AWS Systems Manager to automate the process of tracking your Microsoft SQL Server licenses. You can extend the solution used in this post for other software products. Although this solution was developed for a single account in a single AWS Region, you can easily expand it to work across multiple Regions in a multi-account setup. For more information, see [Running automations in multiple AWS Regions and accounts](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation-multiple-accounts-and-regions.html) in the AWS Systems Manager User Guide.
