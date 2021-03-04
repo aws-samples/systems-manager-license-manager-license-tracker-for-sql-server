@@ -23,8 +23,8 @@ In addition to AWS License Manager, the solution uses the following [AWS Systems
 * [Inventory](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-inventory.html) maintains all the information collected about the instances and the Microsoft SQL Server editions running on them.
 
 
-<p align="center">![](images/architecture.png)
-Figure 1: Solution architecture</p>
+![](images/architecture.png)
+<p align="center">Figure 1: Solution architecture</p>
 
 
 # Walkthrough
@@ -133,7 +133,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 7.	Follow the same steps described above to create the secondary Automation document - `Secondary-SQLServerLicenseTracker-Document` using the contents of [Secondary-SQLServerLicenseTracker-Document.yaml] (SystemsManager/Secondary-SQLServerLicenseTracker-Document.yaml).
 
 ![](images/workflow.png)
-<p align="center">*Figure 3: Execution sequence of Automation document*</p>
+<p align="center">Figure 3: Execution sequence of Automation document</p>
 
 The steps in the primary document are executed in the following order.
 1.	**Remove old Custom Inventory (deleteCustomInventory)**: This clean up task deletes all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL `Custom:SQLServer` on all the EC2 instances. 
