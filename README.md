@@ -24,7 +24,7 @@ In addition to AWS License Manager, the solution uses the following [AWS Systems
 
 
 ![](images/architecture.png)
-<p align="center">*Figure 1 shows the solution architecture*</p>
+<p align="center"> *Figure 1 shows the solution architecture* </p>
 
 
 # Walkthrough
