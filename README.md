@@ -5,8 +5,8 @@ Most enterprises find it hard to maintain control of the commercial licensing of
 
 If your enterprise uses AWS, you can address this challenge in two ways:
 
-•	Using license-included instances allows you access to fully compliant licenses, where AWS handles the tracking and management for you. With this option, you pay as you go, with no upfront costs or long-term investment.
-•	[AWS License Manager](https://aws.amazon.com/systems-manager/features/) makes it easy for you to set rules to manage, discover, and report software license usage. When you use AWS License Manager to associate an Amazon Machine Image (AMI) with a licensing configuration, you can track the use of licenses in AWS or your on-premises environment. You can also set rules in AWS License Manager to prevent licensing violations to help you stay compliant.
+* Using license-included instances allows you access to fully compliant licenses, where AWS handles the tracking and management for you. With this option, you pay as you go, with no upfront costs or long-term investment.
+* [AWS License Manager](https://aws.amazon.com/systems-manager/features/) makes it easy for you to set rules to manage, discover, and report software license usage. When you use AWS License Manager to associate an Amazon Machine Image (AMI) with a licensing configuration, you can track the use of licenses in AWS or your on-premises environment. You can also set rules in AWS License Manager to prevent licensing violations to help you stay compliant.
 
 It’s still possible that your teams might provision software products not governed by these two options, which means you could receive an unwanted surprise in the next audit. 
 
@@ -18,9 +18,9 @@ In this blog post, we show you how to build a solution that discovers and tracks
 AWS License Manager allows you to track your commercial license usage to stay compliant across your enterprise teams. It associates license definitions with AMIs from which instances are launched. AWS License Manager can also auto-discover licensed software (in this solution, Microsoft SQL Server) that’s installed on instances after initial instance deployment. The solution described in this blog post enhances the auto-discovery capability and provides license edition details. 
 
 In addition to AWS License Manager, the solution uses the following [AWS Systems Manager](https://aws.amazon.com/systems-manager/) features:
-•	[Automation] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html) orchestrates the entire workflow.
-•	[State Manager] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state.html) invokes the Automation document on a user-defined frequency.
-•	[Inventory] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-inventory.html) maintains all the information collected about the instances and the Microsoft SQL Server editions running on them.
+* [Automation] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html) orchestrates the entire workflow.
+* [State Manager] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state.html) invokes the Automation document on a user-defined frequency.
+* [Inventory] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-inventory.html) maintains all the information collected about the instances and the Microsoft SQL Server editions running on them.
 
 
 ![](images/architecture.png)
@@ -161,11 +161,11 @@ The steps in the secondary document are executed in the following order.
 4.	For Document version, choose Default at runtime.
 5.	Choose Simple execution. 
 6.	Under Input parameters, enter the following:
-  •	InstanceId: `<Specify the instance IDs that you want to target as comma-separated values (i-02573cafcfEXAMPLE,i-0471e04240EXAMPLE) or use * to target all instance>`
-  •	Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
-  •	AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
-  •	LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
-  •	AutomationAssumeRole: choose `SQLServerLicenseTracker-Role`
+  * InstanceId: `<Specify the instance IDs that you want to target as comma-separated values (i-02573cafcfEXAMPLE,i-0471e04240EXAMPLE) or use * to target all instance>`
+  * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
+  * AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
+  * LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
+  * AutomationAssumeRole: choose `SQLServerLicenseTracker-Role`
 9.	For Specify schedule, you can either choose **CRON schedule builder** to run at your preferred time or **No schedule** to run the association once. In Figure 4, we configured the association to run once.
 
 ![](images/association-schedule.png)
