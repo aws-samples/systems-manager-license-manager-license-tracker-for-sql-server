@@ -23,8 +23,8 @@ In addition to AWS License Manager, the solution uses the following [AWS Systems
 * [Inventory](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-inventory.html) maintains all the information collected about the instances and the Microsoft SQL Server editions running on them.
 
 
-![](images/architecture.png)
-<p align="center">Figure 1: Solution architecture</p>
+<p align="center">![](images/architecture.png)
+Figure 1: Solution architecture</p>
 
 
 # Walkthrough
