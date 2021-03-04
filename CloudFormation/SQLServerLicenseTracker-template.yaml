@@ -373,10 +373,11 @@ Resources:
           - !Ref SQLServerDEVLicenseConfiguration
       ScheduleExpression: "cron(0 00 22 ? * * *)"
       AssociationName: SQLServerLicenseTracker-Association
-      Targets: 
-        - Key: "aws:NoOpAutomationTag"
-          Values: 
-            - "AWS-NoOpAutomationTarget-Value"
+      AutomationTargetParameterName: InstanceId
+      Targets:
+      - Key: "aws:NoOpAutomationTag"
+        Values:
+        - "AWS-NoOpAutomationTarget-Value"
   IAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -395,7 +396,8 @@ Resources:
                       "Sid": "sid0",
                       "Effect": "Allow",
                       "Action": [
-                          "license-manager:UpdateLicenseSpecificationsForResource"
+                          "license-manager:UpdateLicenseSpecificationsForResource",
+                          "ssm:*"
                       ],
                       "Resource": "*"
                   },
