@@ -24,7 +24,7 @@ In addition to AWS License Manager, the solution uses the following [AWS Systems
 
 
 ![](images/architecture.png)
-Figure 1 shows the solution architecture.
+<p align="center">*Figure 1 shows the solution architecture*</p>
 
 
 # Walkthrough
@@ -47,7 +47,6 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 2.	On the JSON tab, enter the following code. Supply values for **REGION**, **AWS-ACCOUNT-ID**, and **ARN OF YOUR LICENSE CONFIGURATION**. You can change the definition name if you like.
 
 ```
-
   {
     "Version": "2012-10-17",
     "Statement": [
@@ -112,7 +111,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 10. Under **Select your use case**, choose **Systems Manager**
 
 ![](images/console-view.png)
-Figure 2: Creating an IAM role
+<p align="center">*Figure 2: Creating an IAM role*</p>
 
 13. Choose **Next: Permissions**
 14. For **Filter policies**, enter `SQLServerLicenseTracker-Policy`
@@ -134,7 +133,7 @@ Figure 2: Creating an IAM role
 7.	Follow the same steps described above to create the secondary Automation document - `Secondary-SQLServerLicenseTracker-Document` using the contents of [Secondary-SQLServerLicenseTracker-Document.yaml] (SystemsManager/Secondary-SQLServerLicenseTracker-Document.yaml).
 
 ![](images/workflow.png)
-Figure 3: Execution sequence of Automation document 
+<p align="center">*Figure 3: Execution sequence of Automation document*</p>
 
 The steps in the primary document are executed in the following order.
 1.	**Remove old Custom Inventory (deleteCustomInventory)**: This clean up task deletes all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL `Custom:SQLServer` on all the EC2 instances. 
@@ -169,7 +168,7 @@ The steps in the secondary document are executed in the following order.
 9.	For Specify schedule, you can either choose **CRON schedule builder** to run at your preferred time or **No schedule** to run the association once. In Figure 4, we configured the association to run once.
 
 ![](images/association-schedule.png)
-Figure 4: Configuring the execution schedule 
+<p align="center">*Figure 4: Configuring the execution schedule*</p>
 
 10. Choose **Create Association**
 
@@ -183,40 +182,40 @@ After an association has been created, it will trigger the first run of the docu
 4.	Figure 5 shows a successful execution of the primary document.
 
 ![](images/primary-document-execution.png)
-Figure 5: Primary document execution 
+<p align="center">*Figure 5: Primary document execution*</p>
 
 5.	Using the AutomationExecutionID displayed in the **Outputs** section search for Execution ID under **Automation executions** in the Automation dashboard as shown in Figure 6.
 
 ![](images/automation-execution-search.png)
-Figure 6: Automation execution search
+<p align="center">*Figure 6: Automation execution search*</p>
 
 6.	Clicking on the **Execution ID** will list out all the instances the secondary document has been targeted against as shown in Figure 7. For more details on individual instances click on the appropriate **Step ID**.
 
 ![](images/state-manager-association.png)
-Figure 7: Automation execution search
+<p align="center">*Figure 7: Automation execution search*</p>
 
 7.	Under **Node Management**, choose **Inventory**. In the **Top 10 Custom inventory types** window, you should see `SQLServer`, as shown in Figure 8.
 
 ![](images/inventory-dashboard.png)
-Figure 8: Automation execution search
+<p align="center">*Figure 8: Automation execution search</p>
 
 8.	For filter type, use **Custom : Custom:SQLServer.Edition : Standard Edition** in the search bar. At the bottom of the Inventory dashboard you should see a list of corresponding managed instances. If no EC2 instances are available, change the edition value to one of the other editions.
 9.	Click on one of the instance IDs, and then choose the **Inventory** tab.
 10.	Under **Inventory type**, choose **Custom:SQLServer**. The SQL Server version, edition, and name is displayed, as shown in Figure 7.
 
 ![](images/custom-inventory.png)
-Figure 9: Custom:SQLServer Inventory type
+<p align="center">*Figure 9: Custom:SQLServer Inventory type*</p>
 
 11.	Open the AWS License Manager console to confirm that the license configuration has been updated by the solution. 
 12.	In **Customer managed licenses**, review the configurations to see if they have been updated, as shown in Figure 10.
 
 ![](images/customer-managed-licenses.png)
-Figure 10: Cusomter-managed license configurations
+<p align="center">*Figure 10: Cusomter-managed license configurations*</p>
 
 13. Choose any of the **License configuration name** which has more than 1 license consumed. All the associated instances will be listed under **Resources**, as shown in Figure 11.
 
 ![](images/license-manager-configuration-example.png)
-Figure 11: Associated resources for the customer-managed license configuration
+<p align="center">*Figure 11: Associated resources for the customer-managed license configuration*</p>
 
 
 ## Conclusion
