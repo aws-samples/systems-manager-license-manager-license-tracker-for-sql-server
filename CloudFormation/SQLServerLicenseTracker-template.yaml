@@ -426,16 +426,15 @@ Resources:
                       "Sid": "sid3",
                       "Effect": "Allow",
                       "Action": [
-                          "ssm:DescribeAutomationExecutions",
-                          "ssm:GetAutomationExecution",
+                          "ssm:DeleteInventory",
                           "ssm:PutInventory",
-                          "ssm:DescribeAutomationStepExecutions",
-                          "ssm:ListCommands",
-                          "ssm:DescribeInstanceInformation",
-                          "ssm:SendAutomationSignal",
-                          "ssm:ListCommandInvocations",
-                          "ssm:StopAutomationExecution",
                           "ssm:StartAutomationExecution",
+                          "ssm:ListCommands",
+                          "ec2:DescribeInstances",
+                          "ssm:DescribeInstanceInformation",
+                          "ec2:DescribeTags",
+                          "ssm:ListCommandInvocations",
+                          "ssm:UpdateInstanceAssociationStatus",
                           "license-manager:ListLicenseSpecificationsForResource"
                       ],
                       "Resource": "*"
