@@ -354,7 +354,9 @@ Resources:
     Properties:
       Name: !Ref PrimarySSMDocument
       DocumentVersion: "$DEFAULT"
-      Parameters: 
+      Parameters:
+        InstanceId:
+          - !Ref InstanceId 
         AccountId:
           - !Ref AWS::AccountId
         AutomationAssumeRole:
@@ -371,13 +373,8 @@ Resources:
           - !Ref SQLServerWEBLicenseConfiguration
         SQLServerDEVLicenseConfiguration:
           - !Ref SQLServerDEVLicenseConfiguration
-      ScheduleExpression: "cron(0 00 22 ? * * *)"
       AssociationName: SQLServerLicenseTracker-Association
-      AutomationTargetParameterName: InstanceId
-      Targets:
-      - Key: "aws:NoOpAutomationTag"
-        Values:
-        - "AWS-NoOpAutomationTarget-Value"
+
   IAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
