@@ -177,7 +177,7 @@ mainSteps:
             $ser = New-Object System.Web.Script.Serialization.JavaScriptSerializer
             $billingProduct = $ser.DeserializeObject($content).billingProducts
 
-            if (($billingProduct -eq "bp-6aa54003") -or ($billingProduct -eq "bp-62a5400b") -or ($billingProduct -eq "bp-65a5400c")) 
+            if (($billingProduct -like "bp-6aa54003") -or ($billingProduct -like "bp-62a5400b") -or ($billingProduct -like "bp-65a5400c")) 
             {
               return $found
             }

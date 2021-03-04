@@ -43,12 +43,8 @@ mainSteps:
       Service: ssm
       TypeName: 'Custom:SQLServer'
     nextStep: invokeSecondarySQLLicenseTrackingSolutionAutomation
-    outputs:
-      - Name: result
-        Selector: $.Payload.message
-        Type: String
   - name: invokeSecondarySQLLicenseTrackingSolutionAutomation
-    description: This step invokes the SecondarySQLLicenseTrackingSolutionDocument automation
+    description: This step invokes the SecondarySQLLicenseTrackingSolutionDocument Automation
     action: 'aws:executeScript'
     inputs:
       Runtime: python3.7
