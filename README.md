@@ -89,11 +89,11 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
                 "ssm:PutInventory",
                 "ssm:StartAutomationExecution",
                 "ssm:ListCommands",
-                "ec2:DescribeInstances",
                 "ssm:DescribeInstanceInformation",
-                "ec2:DescribeTags",
                 "ssm:ListCommandInvocations",
                 "ssm:UpdateInstanceAssociationStatus",
+                "ec2:DescribeInstances",
+                "ec2:DescribeTags",
                 "license-manager:ListLicenseSpecificationsForResource"
             ],
             "Resource": "*"
