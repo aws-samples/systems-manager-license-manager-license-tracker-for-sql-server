@@ -36,9 +36,9 @@ To implement this solution, we need to complete the following steps:
 3.	Create a State Manager association, which invokes the Automation document.
 4.	Test the solution.
 
-If you prefer to use a [CloudFormation template](https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTracker-template.yaml) to create these resources, launch the following stack.
+If you prefer to use a [CloudFormation template](https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTrackingSolution-template.yaml) to create these resources, launch the following stack.
 
-[![cfn-stack](images/cfn-stack.png)]((https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTracker-template.yaml))
+[![cfn-stack](images/cfn-stack.png)]((https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTrackingSolution-template.yaml))
 
 ## Create an IAM service role and policy
 
@@ -68,10 +68,10 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
             ],
             "Resource": [
                 "arn:aws:ec2:*:<AWS-ACCOUNT-ID>:instance/*",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Primary-SQLServerLicenseTracker-Document:VersionId}",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Primary-SQLServerLicenseTracker-Document",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Secondary-SQLServerLicenseTracker-Document:VersionId}",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Secondary-SQLServerLicenseTracker-Document",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Primary-SQLServerLicenseTrackingSolution-Document:VersionId}",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Primary-SQLServerLicenseTrackingSolution-Document",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Secondary-SQLServerLicenseTrackingSolution-Document:VersionId}",
+                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Secondary-SQLServerLicenseTrackingSolution-Document",
                 "arn:aws:ssm:<REGION>:*:document/AWS-RunPowerShellScript"
             ]
         },
@@ -79,7 +79,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
             "Sid": "sid2",
             "Effect": "Allow",
             "Action": "iam:PassRole",
-            "Resource": "arn:aws:iam::${AWS::AccountId}:role/SQLServerLicenseTracker-Role"
+            "Resource": "arn:aws:iam::${AWS::AccountId}:role/SQLServerLicenseTrackingSolution-Role"
         },
         {
             "Sid": "sid3",
@@ -103,7 +103,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 ```
 
 4. Choose **Review policy**
-5. For **Name**, enter `SQLServerLicenseTracker-Policy`
+5. For **Name**, enter `SQLServerLicenseTrackingSolution-Policy`
 6. For **Description**, enter `Policy used by SSM and License Manager to track your SQL Server licenses using License Manager`
 7. Choose **Create policy**
 8. Next, you need to create an IAM role. In the IAM console, choose **Roles**, and then choose **Create role**
@@ -114,10 +114,10 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 <p align="center">Figure 2: Creating an IAM role</p>
 
 13. Choose **Next: Permissions**
-14. For **Filter policies**, enter `SQLServerLicenseTracker-Policy`
+14. For **Filter policies**, enter `SQLServerLicenseTrackingSolution-Policy`
 15. Choose **Next: Tags**
 16. Choose **Next: Review**
-17. For **Role name**, enter `SQLServerLicenseTracker-Role`
+17. For **Role name**, enter `SQLServerLicenseTrackingSolution-Role`
 18. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`
 19. Choose **Create role**
 
@@ -126,11 +126,11 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 
 1.	In the AWS Systems Manager console, under **Actions & Change**, choose **Automation**.
 2.	Choose **Execute automation**, choose **Create document**, and then choose **Editor**.
-3.	For **Name**, enter  `Primary-SQLServerLicenseTracker-Document`.
+3.	For **Name**, enter  `Primary-SQLServerLicenseTrackingSolution-Document`.
 4.	In the editor, choose **Edit**, and then choose **OK** to confirm.
-5.	Delete the existing content and paste the contents of [Primary-SQLServerLicenseTracker-Document.yaml] (SystemsManager/Primary-SQLServerLicenseTracker-Document.yaml).
+5.	Delete the existing content and paste the contents of [Primary-SQLServerLicenseTrackingSolution-Document.yaml] (SystemsManager/Primary-SQLServerLicenseTrackingSolution-Document.yaml).
 6.	Choose **Create automation**, and then verify that the newly created document is displayed under Owned by me.
-7.	Follow the same steps described above to create the secondary Automation document - `Secondary-SQLServerLicenseTracker-Document` using the contents of [Secondary-SQLServerLicenseTracker-Document.yaml] (SystemsManager/Secondary-SQLServerLicenseTracker-Document.yaml).
+7.	Follow the same steps described above to create the secondary Automation document - `Secondary-SQLServerLicenseTrackingSolution-Document` using the contents of [Secondary-SQLServerLicenseTrackingSolution-Document.yaml] (SystemsManager/Secondary-SQLServerLicenseTrackingSolution-Document.yaml).
 
 ![](images/workflow.png)
 <p align="center">Figure 3: Execution sequence of Automation document</p>
@@ -155,8 +155,8 @@ The steps in the secondary document are executed in the following order.
 ## Create State Manager association
 
 1.	In the AWS Systems Manager console, under Instances & Nodes, choose State Manager, and then choose Create association.
-2.	For Name, enter  SQLServerLicenseTracker-Association.
-3.	In the search field, enter Primary-SQLServerLicenseTracker-Document, and then choose it in the results.
+2.	For Name, enter  SQLServerLicenseTrackingSolution-Association.
+3.	In the search field, enter Primary-SQLServerLicenseTrackingSolution-Document, and then choose it in the results.
 4.	For Document version, choose Default at runtime.
 5.	Choose Simple execution. 
 6.	Under Input parameters, enter the following:
@@ -164,7 +164,7 @@ The steps in the secondary document are executed in the following order.
   * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
   * AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
   * LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
-  * AutomationAssumeRole: choose `SQLServerLicenseTracker-Role`
+  * AutomationAssumeRole: choose `SQLServerLicenseTrackingSolution-Role`
 9.	For Specify schedule, you can either choose **CRON schedule builder** to run at your preferred time or **No schedule** to run the association once. In Figure 4, we configured the association to run once.
 
 ![](images/association-schedule.png)
@@ -177,7 +177,7 @@ The steps in the secondary document are executed in the following order.
 After an association has been created, it will trigger the first run of the document. To ensure the solution has been deployed correctly, perform the following checks.
 
 1.	In the AWS Systems Manager console, under **Instances & Nodes**, choose **State Manager**.
-2.	Search for `SQLServerLicenseTracker-Association`, and then choose the association ID.
+2.	Search for `SQLServerLicenseTrackingSolution-Association`, and then choose the association ID.
 3.	Choose **Execution history**, and then choose the latest execution ID, and then click on the **Output** icon.
 4.	Figure 5 shows a successful execution of the primary document.
 
