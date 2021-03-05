@@ -71,7 +71,7 @@ Resources:
           "schemaVersion" : "0.3",
           "assumeRole" : "{{ AutomationAssumeRole }}",
           "outputs" : [ 
-            "invokeSecondarySQLLicenseTrackingSolutionAutomation.result"
+            "invokeSecondarySQLServerLicenseTrackingSolutionAutomation.result"
           ],
           "parameters" : {
             "InstanceId" : {
@@ -130,20 +130,20 @@ Resources:
                 "Service" : "ssm",
                 "TypeName" : "Custom:SQLServer"
               },
-              "nextStep" : "invokeSecondarySQLLicenseTrackingSolutionAutomation",
+              "nextStep" : "invokeSecondarySQLServerLicenseTrackingSolutionAutomation",
               "outputs" : [ {
                 "Name" : "result",
                 "Selector" : "$.Payload.message",
                 "Type" : "String"
               } ]
             }, {
-              "name" : "invokeSecondarySQLLicenseTrackingSolutionAutomation",
-              "description" : "This step invokes the SecondarySQLLicenseTrackingSolutionDocument automation",
+              "name" : "invokeSecondarySQLServerLicenseTrackingSolutionAutomation",
+              "description" : "This step invokes the SecondarySQLServerLicenseTrackingSolutionDocument automation",
               "action" : "aws:executeScript",
               "inputs" : {
                 "Runtime" : "python3.7",
                 "Handler" : "script_handler",
-                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  \n  instanceId = events['instanceId']\n  accountId = events['accountId']\n  region = events['region']\n  sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  \n  if instanceId == '\\*':\n    key = 'InstanceIds'\n  else:\n    key = 'ParameterValues'\n  \n  response = client.start_automation_execution(\n    DocumentName='Secondary-SQLLicenseTrackingSolution-Document',\n    Parameters={\n        'Region': [\n            region\n        ],\n        'AccountId': [\n            accountId\n        ],\n        'InstanceId': [\n            instanceId\n        ],\n        'SQLServerEELicenseConfiguration': [\n            sqlServerEELicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': key,\n            'Values': [\n                instanceId,\n            ]\n        },\n    ]\n  )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn't be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  \n  instanceId = events['instanceId']\n  accountId = events['accountId']\n  region = events['region']\n  sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  \n  if instanceId == '\\*':\n    key = 'InstanceIds'\n  else:\n    key = 'ParameterValues'\n  \n  response = client.start_automation_execution(\n    DocumentName='Secondary-SQLServerLicenseTrackingSolution-Document',\n    Parameters={\n        'Region': [\n            region\n        ],\n        'AccountId': [\n            accountId\n        ],\n        'InstanceId': [\n            instanceId\n        ],\n        'SQLServerEELicenseConfiguration': [\n            sqlServerEELicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': key,\n            'Values': [\n                instanceId,\n            ]\n        },\n    ]\n  )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn't be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
                 "InputPayload" : {
                   "instanceId" : "{{ InstanceId }}",
                   "accountId" : "{{ AccountId }}",

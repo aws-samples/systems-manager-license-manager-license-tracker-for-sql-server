@@ -1,0 +1,139 @@
+description: Primary document for SQL License Tracking Solution
+schemaVersion: '0.3'
+assumeRole: '{{ AutomationAssumeRole }}'
+outputs:
+  - invokeSecondarySQLServerLicenseTrackingSolutionAutomation.result
+parameters:
+  InstanceId:
+    type: String
+    description: '(Optional) Specify the instance IDs as comma-separated values (i-02573cafcfEXAMPLE,i-0471e04240EXAMPLE,i-07782c72faEXAMPLE) or use * to target all instances'
+    default: '*'
+  Region:
+    type: String
+    description: (Optional) Specify the AWS Region where you are deploying this document otherwise the region in which this document is executed will be used
+    default: '{{global:REGION}}'
+  AccountId:
+    type: String
+    description: (Optional) Specify the AWS Account ID where you are deploying this document otherwise the account in which this document is executed will be used
+    default: '{{global:ACCOUNT_ID}}'
+  SQLServerEELicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Enterprise Edition
+  SQLServerEXPLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Express Edition
+  SQLServerSTDLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Standard Edition
+  SQLServerWEBLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Web Edition
+  SQLServerDEVLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Developer Edition
+  AutomationAssumeRole:
+    type: String
+    description: 'The IAM role for this execution. If no role is specified, then AWS Systems Manager Automation will be unable to complete.'
+mainSteps:
+  - name: deleteCustomInventory
+    description: This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances. 
+    action: 'aws:executeAwsApi'
+    inputs:
+      Api: DeleteInventory
+      Service: ssm
+      TypeName: 'Custom:SQLServer'
+    nextStep: invokeSecondarySQLServerLicenseTrackingSolutionAutomation
+  - name: invokeSecondarySQLServerLicenseTrackingSolutionAutomation
+    description: This step invokes the SecondarySQLServerLicenseTrackingSolutionDocument Automation
+    action: 'aws:executeScript'
+    inputs:
+      Runtime: python3.7
+      Handler: script_handler
+      Script: |-
+        import sys
+        import boto3
+        import json
+        import botocore
+
+        def script_handler(events, context):
+          client = boto3.client('ssm')
+          
+          instanceId = events['instanceId']
+          accountId = events['accountId']
+          region = events['region']
+          sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']
+          sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']
+          sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']
+          sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']
+          sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']
+          automationAssumeRole = events['automationAssumeRole']
+          
+          if instanceId == '*':
+            key = 'InstanceIds'
+          else:
+            key = 'ParameterValues'
+          
+          response = client.start_automation_execution(
+            DocumentName='Secondary-SQLServerLicenseTrackingSolution-Document',
+            Parameters={
+                'Region': [
+                    region
+                ],
+                'AccountId': [
+                    accountId
+                ],
+                'InstanceId': [
+                    instanceId
+                ],
+                'SQLServerEELicenseConfiguration': [
+                    sqlServerEELicenseConfig
+                ],
+                'SQLServerSTDLicenseConfiguration': [
+                    sqlServerSTDLicenseConfig
+                ],
+                'SQLServerEXPLicenseConfiguration': [
+                    sqlServerEXPLicenseConfig
+                ],
+                'SQLServerWEBLicenseConfiguration': [
+                    sqlServerWEBLicenseConfig
+                ],
+                'SQLServerDEVLicenseConfiguration': [
+                    sqlServerDEVLicenseConfig
+                ],
+                'AutomationAssumeRole': [
+                    automationAssumeRole
+                ]
+            },
+            TargetParameterName='InstanceId',
+            Targets=[
+                {
+                    'Key': key,
+                    'Values': [
+                        instanceId,
+                    ]
+                },
+            ]
+          )
+          
+          if response["AutomationExecutionId"]:
+            status = "Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - " + response["AutomationExecutionId"] + " for more details"
+          else:
+            status = "Secondary-SQLServerLicenseTrackingSolution-Document was not invoked"
+            raise Exception(f"It appears that this step couldn't be completed due to an unknown error. Please check the logs for more details") 
+          
+          return {'message': status}
+      InputPayload:
+        instanceId: '{{ InstanceId }}'
+        accountId: '{{ AccountId }}'
+        region: '{{ Region }}'
+        sqlServerEELicenseConfig: '{{ SQLServerEELicenseConfiguration }}'
+        sqlServerSTDLicenseConfig: '{{ SQLServerSTDLicenseConfiguration }}'
+        sqlServerEXPLicenseConfig: '{{ SQLServerEXPLicenseConfiguration }}'
+        sqlServerWEBLicenseConfig: '{{ SQLServerWEBLicenseConfiguration }}'
+        sqlServerDEVLicenseConfig: '{{ SQLServerDEVLicenseConfiguration }}'
+        automationAssumeRole: '{{ AutomationAssumeRole }}'
+    outputs:
+      - Name: result
+        Selector: $.Payload.message
+        Type: String
+    isEnd: true

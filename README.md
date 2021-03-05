@@ -137,7 +137,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 
 The steps in the primary document are executed in the following order.
 1.	**Remove old Custom Inventory (deleteCustomInventory)**: This clean up task deletes all the metadata associated with the [custom inventory type](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-custom.html) created for MSSQL `Custom:SQLServer` on all the EC2 instances. 
-2.	**Invoke Secondary Document (invokeSecondarySQLLicenseTrackingSolutionDocument)**: This step invokes the SecondarySQLLicenseTrackingSolutionDocument automation
+2.	**Invoke Secondary Document (invokeSecondarySQLServerLicenseTrackingSolutionDocument)**: This step invokes the SecondarySQLServerLicenseTrackingSolutionDocument automation
 
 
 The steps in the secondary document are executed in the following order.
