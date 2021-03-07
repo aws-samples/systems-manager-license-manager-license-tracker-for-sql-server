@@ -81,7 +81,7 @@ mainSteps:
           else:
             status = "Custom:SQLServer type doesn't exist in the Inventory so continuing to the next step."
             
-            return {'message': status}
+          return {'message': status}
     outputs:
       - Name: result
         Selector: $.Payload.message
