@@ -88,6 +88,7 @@ mainSteps:
         Type: String
     isCritical: true
     onFailure: Abort
+    nextStep: invokeSecondarySQLServerLicenseTrackingSolutionAutomation
   - name: invokeSecondarySQLServerLicenseTrackingSolutionAutomation
     description: This step invokes the SecondarySQLServerLicenseTrackingSolutionDocument Automation
     action: 'aws:executeScript'
