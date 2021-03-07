@@ -2,6 +2,7 @@ description: Primary document for SQL License Tracking Solution
 schemaVersion: '0.3'
 assumeRole: '{{ AutomationAssumeRole }}'
 outputs:
+  - deleteCustomInventory.result
   - invokeSecondarySQLServerLicenseTrackingSolutionAutomation.result
 parameters:
   InstanceId:
@@ -36,13 +37,57 @@ parameters:
     description: 'The IAM role for this execution. If no role is specified, then AWS Systems Manager Automation will be unable to complete.'
 mainSteps:
   - name: deleteCustomInventory
-    description: This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances. 
-    action: 'aws:executeAwsApi'
+    description: 'This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances.'
+    action: 'aws:executeScript'
     inputs:
-      Api: DeleteInventory
-      Service: ssm
-      TypeName: 'Custom:SQLServer'
-    nextStep: invokeSecondarySQLServerLicenseTrackingSolutionAutomation
+      Runtime: python3.7
+      Handler: script_handler
+      Script: |-
+        import sys
+        import boto3
+        import json
+        import botocore
+        import time
+        
+        def script_handler(events, context):
+          client = boto3.client('ssm')
+          
+          get_inventory_response = client.get_inventory_schema(
+            TypeName='Custom:SQLServer'
+          )
+          
+          if get_inventory_response['Schemas']:
+            delete_inventory_response = client.delete_inventory(
+              TypeName='Custom:SQLServer',
+              SchemaDeleteOption='DeleteSchema'
+            )
+            
+            deletion_id = delete_inventory_response['DeletionId']
+            print(deletion_id)
+           
+            wait_loop = True
+            while wait_loop == True:
+              describe_inventory_deletions_response = client.describe_inventory_deletions(
+                DeletionId=deletion_id
+              )
+              if describe_inventory_deletions_response['InventoryDeletions']:
+                if describe_inventory_deletions_response['InventoryDeletions'][0]['LastStatusMessage'] == "Deletion is successful":
+                  status = "Custom:SQLServer schema has been deleted successfuly, 'DeletionID': "+deletion_id
+                  wait_loop = False
+                  break
+                else:
+                  time.sleep(60)
+        
+          else:
+            status = "Custom:SQLServer type doesn't exist in the Inventory so continuing to the next step."
+            
+            return {'message': status}
+    outputs:
+      - Name: result
+        Selector: $.Payload.message
+        Type: String
+    isCritical: true
+    onFailure: Abort
   - name: invokeSecondarySQLServerLicenseTrackingSolutionAutomation
     description: This step invokes the SecondarySQLServerLicenseTrackingSolutionDocument Automation
     action: 'aws:executeScript'
@@ -136,4 +181,6 @@ mainSteps:
       - Name: result
         Selector: $.Payload.message
         Type: String
+    isCritical: true
+    onFailure: Abort
     isEnd: true
