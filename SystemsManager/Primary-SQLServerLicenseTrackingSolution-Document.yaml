@@ -71,7 +71,7 @@ mainSteps:
                 DeletionId=deletion_id
               )
               if describe_inventory_deletions_response['InventoryDeletions']:
-                if describe_inventory_deletions_response['InventoryDeletions'][0]['LastStatusMessage'] == "Deletion is successful":
+                if describe_inventory_deletions_response['InventoryDeletions'][0]['LastStatus'] == "Complete":
                   status = "Custom:SQLServer schema has been deleted successfuly. DeletionID: "+deletion_id
                   wait_loop = False
                   break
