@@ -44,7 +44,7 @@ If you prefer to use a [CloudFormation template](https://d1h72l1210l8yk.cloudfro
 
 Create an IAM policy that allows Systems Manager to call other AWS services, such as Amazon Elastic Compute Cloud (Amazon EC2) and AWS License Manager, to perform the steps in the Automation document.
 1.	In the AWS Identity and Access Management console, choose Policies, and then choose Create policy.
-2.	On the JSON tab, enter the following code. Supply values for **REGION**, **AWS-ACCOUNT-ID**, and **ARN OF YOUR LICENSE CONFIGURATION**. You can change the definition name if you like.
+2.	On the JSON tab, enter the following code. Supply values for **REGION**, **AWS-ACCOUNT-ID**, and **ARN OF YOUR LICENSE CONFIGURATION**.
 
 ```
   {
