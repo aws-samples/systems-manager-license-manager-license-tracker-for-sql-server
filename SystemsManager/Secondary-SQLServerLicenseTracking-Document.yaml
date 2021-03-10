@@ -131,10 +131,10 @@ mainSteps:
           client = boto3.client('ssm')
           
           response = client.describe_instance_information(
-            InstanceInformationFilterList=[
+            Filters=[
                 {
-                    'key': 'InstanceIds',
-                    'valueSet': [
+                    'Key': 'InstanceIds',
+                    'Values': [
                         instanceId,
                     ]
                 },

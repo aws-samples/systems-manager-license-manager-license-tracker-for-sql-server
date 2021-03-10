@@ -251,7 +251,7 @@ Resources:
               "inputs" : {
                 "Runtime" : "python3.7",
                 "Handler" : "script_handler",
-                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  instanceId = events['instanceId']\n\n  client = boto3.client('ssm')\n  \n  response = client.describe_instance_information(\n    InstanceInformationFilterList=[\n        {\n            'key': 'InstanceIds',\n            'valueSet': [\n                instanceId,\n            ]\n        },\n    ]\n  )\n  \n  if response[\"InstanceInformationList\"]:\n    if response[\"InstanceInformationList\"][0]['PingStatus'] == 'Online' and response[\"InstanceInformationList\"][0]['PlatformType'] == 'Windows':\n      status = f\"{instanceId} is eligible for this automation execution\"\n    else:\n      raise Exception(f\"{instanceId} currently appears to be unavilable for this automation\")\n  else:\n    raise Exception(f\"{instanceId} is ineligible for this automation\")\n                    \n  return status",
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  instanceId = events['instanceId']\n\n  client = boto3.client('ssm')\n  \n  response = client.describe_instance_information(\n    Filters=[\n        {\n            'Key': 'InstanceIds',\n            'Values': [\n                instanceId,\n            ]\n        },\n    ]\n  )\n  \n  if response[\"InstanceInformationList\"]:\n    if response[\"InstanceInformationList\"][0]['PingStatus'] == 'Online' and response[\"InstanceInformationList\"][0]['PlatformType'] == 'Windows':\n      status = f\"{instanceId} is eligible for this automation execution\"\n    else:\n      raise Exception(f\"{instanceId} currently appears to be unavilable for this automation\")\n  else:\n    raise Exception(f\"{instanceId} is ineligible for this automation\")\n                    \n  return status",
                 "InputPayload" : {
                   "instanceId" : "{{ InstanceId }}"
                 }
@@ -441,7 +441,12 @@ Resources:
                           "ec2:DescribeTags",
                           "ssm:ListCommandInvocations",
                           "ssm:UpdateInstanceAssociationStatus",
-                          "license-manager:ListLicenseSpecificationsForResource"
+                          "license-manager:ListLicenseSpecificationsForResource",
+                          "ec2messages:GetEndpoint",
+                          "ec2messages:FailMessage",
+                          "ec2messages:AcknowledgeMessage",
+                          "ec2messages:SendReply",
+                          "ec2messages:GetMessages
                       ],
                       "Resource": "*"
                   }
