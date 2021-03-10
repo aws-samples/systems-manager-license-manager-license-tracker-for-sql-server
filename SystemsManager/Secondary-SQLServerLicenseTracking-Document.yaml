@@ -167,19 +167,25 @@ mainSteps:
         commands:
           - |
             $found = "false"
+            
+            try {
+              $webrequest = [System.Net.WebRequest]::Create("http://168.254.169.254/latest/dynamic/instance-identity/document")
+              $response = $webrequest.GetResponse()
+              $stream = $response.GetResponseStream()
+              $sr = new-object System.IO.StreamReader($stream)
+              $content = $sr.ReadToEnd();
+              [System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions") | out-null
+              $ser = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+              $billingProduct = $ser.DeserializeObject($content).billingProducts
 
-            $webrequest = [System.Net.WebRequest]::Create("http://169.254.169.254/latest/dynamic/instance-identity/document")
-            $response = $webrequest.GetResponse()
-            $stream = $response.GetResponseStream()
-            $sr = new-object System.IO.StreamReader($stream)
-            $content = $sr.ReadToEnd();
-            [System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions") | out-null
-            $ser = New-Object System.Web.Script.Serialization.JavaScriptSerializer
-            $billingProduct = $ser.DeserializeObject($content).billingProducts
+              if (($billingProduct -eq "bp-6aa54003") -or ($billingProduct -eq "bp-62a5400b") -or ($billingProduct -eq "bp-65a5400c")) 
+              {
+                return $found
+              }
+            }
 
-            if (($billingProduct -eq "bp-6aa54003") -or ($billingProduct -eq "bp-62a5400b") -or ($billingProduct -eq "bp-65a5400c")) 
-            {
-              return $found
+            catch {
+                $ErrorMessage = $Error[0].Exception.ErrorRecord.Exception.Message;
             }
 
             $list = New-Object System.Collections.ArrayList
@@ -190,13 +196,13 @@ mainSteps:
               $server = (get-itemproperty -ErrorAction Stop 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances
               foreach ($s in $server) 
               {
-                  $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$s
-                  $o = [pscustomobject]@{
-                   Version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Version
-                   Edition = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Edition
-                   Name = $p
-                  }
-                  $server_info_list = $list.Add($o)
+                $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$s
+                $o = [pscustomobject]@{
+                Version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Version
+                Edition = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Edition
+                Name = $p
+                }
+                $server_info_list = $list.Add($o)
               }
               $jsonList = ConvertTo-Json -InputObject $list
               return $jsonList
@@ -204,7 +210,7 @@ mainSteps:
             else
             {
               return $found
-            }
+            } 
     outputs:
       - Name: result
         Type: String

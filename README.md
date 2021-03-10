@@ -99,7 +99,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
                 "ec2messages:FailMessage",
                 "ec2messages:AcknowledgeMessage",
                 "ec2messages:SendReply",
-                "ec2messages:GetMessages
+                "ec2messages:GetMessages"
             ],
             "Resource": "*"
         }
