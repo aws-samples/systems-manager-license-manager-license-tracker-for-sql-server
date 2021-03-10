@@ -165,7 +165,7 @@ The steps in the secondary document are executed in the following order.
 4.	For Document version, choose Default at runtime.
 5.	Choose Simple execution. 
 6.	Under Input parameters, enter the following:
-  * InstanceId: `<Specify the instance IDs that you want to target as comma-separated values (i-02573cafcfEXAMPLE,i-0471e04240EXAMPLE) or use * to target all instance>`
+  * InstanceId: `<Use * to target all instances in the account this solution is deployed into>`
   * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
   * AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
   * LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`

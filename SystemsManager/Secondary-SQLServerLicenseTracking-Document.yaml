@@ -6,8 +6,10 @@ outputs:
   - updateLicenseManagerConfiguration.result
 parameters:
   InstanceId:
+    description: (Required) Use * to target all instances in the account this solution is deployed into
     type: String
-    description: The ID of the EC2 instance
+    default: '*'
+    allowedPattern : '\*|^[m]{0,1}i-[a-z0-9]{8,17}' 
   Region:
     type: String
     description: (Optional) Specify the AWS Region where you are deploying this document otherwise the region in which this document is executed will be used

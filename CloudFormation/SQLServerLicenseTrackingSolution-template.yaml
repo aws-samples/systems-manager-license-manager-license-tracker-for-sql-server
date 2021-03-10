@@ -25,11 +25,11 @@ Metadata:
         default: 'Developer Edition'
 Parameters:
   InstanceId:
-    Description: (Optional) Specify the instance IDs as comma-separated values (i-02573cafcfEXAMPLE,i-0471e04240EXAMPLE,i-07782c72faEXAMPLE) or use * to target all instances'
+    Description: (Required) Use * to target all instances in the account this solution is deployed into or you can specify an individual instance ID'
     Type: String
     Default: '*'
-    AllowedPattern: '\*|^[m]{0,1}i-[a-z0-9]{8,17}$'
-    ConstraintDescription: Provide a valid instnace ID(s) or specify * to target all instances
+    AllowedPattern: '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
+    ConstraintDescription: Provide * to target all instances or specify an individual instnace ID
   SQLServerEELicenseConfiguration:
     Description: (Optional) License Configuration ARN for SQL Server Enterprise Edition
     Type: String
@@ -77,8 +77,8 @@ Resources:
           "parameters" : {
             "InstanceId" : {
               "type" : "String",
-              "description" : "(Required) Specify the instance IDs as comma-separated values (i-02573cafcfEXAMPLE,i-0471e04240EXAMPLE,i-07782c72faEXAMPLE) or use * to target all instances",
-              "allowedPattern" : "\\*|^[m]{0,1}i-[a-z0-9]{8,17}$",
+              "description" : "(Required) Use * to target all instances in the account this solution is deployed into or you can specify an individual instance ID",
+              "allowedPattern" : "\\*|^[m]{0,1}i-[a-z0-9]{8,17}",
               "default" : "*"
             },
             "Region" : {
