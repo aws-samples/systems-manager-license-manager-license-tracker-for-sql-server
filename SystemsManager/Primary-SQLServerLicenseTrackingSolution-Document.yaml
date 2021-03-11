@@ -9,7 +9,16 @@ parameters:
     description: (Required) Use * to target all instances in the account this solution is deployed into
     type: String
     default: '*'
-    allowedPattern : '\*|^[m]{0,1}i-[a-z0-9]{8,17}' 
+    allowedPattern : '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
+  TagKey:
+    description: (Optional) This parameter is required if you want to target all managed instances using tags
+    type: String
+    default: 'tag:LicenseTrackingSolution-ManagedInstance'
+    allowedPattern: '^tag:$'
+  TagValue:
+    description: (Optional) This parameter is required if you want to target all managed instances using tags
+    type: String
+    default: 'true' 
   Region:
     type: String
     description: (Optional) Specify the AWS Region where you are deploying this document otherwise the region in which this document is executed will be used
@@ -21,18 +30,23 @@ parameters:
   SQLServerEELicenseConfiguration:
     type: String
     description: License Configuration for SQL Enterprise Edition
+    default: '-'
   SQLServerEXPLicenseConfiguration:
     type: String
     description: License Configuration for SQL Express Edition
+    default: '-'
   SQLServerSTDLicenseConfiguration:
     type: String
     description: License Configuration for SQL Standard Edition
+    default: '-'
   SQLServerWEBLicenseConfiguration:
     type: String
     description: License Configuration for SQL Web Edition
+    default: '-'
   SQLServerDEVLicenseConfiguration:
     type: String
     description: License Configuration for SQL Developer Edition
+    default: '-'
   AutomationAssumeRole:
     type: String
     description: 'The IAM role for this execution. If no role is specified, then AWS Systems Manager Automation will be unable to complete.'
@@ -107,6 +121,8 @@ mainSteps:
           
           instanceId = events['instanceId']
           accountId = events['accountId']
+          tagKey = events['tagKey']
+          tagValue = events['tagValue']
           region = events['region']
           sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']
           sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']
@@ -116,9 +132,11 @@ mainSteps:
           automationAssumeRole = events['automationAssumeRole']
           
           if instanceId == '*':
-            key = 'InstanceIds'
+            key = tagKey
+            values = tagValue
           else:
             key = 'ParameterValues'
+            values = instanceId
           
           response = client.start_automation_execution(
             DocumentName='Secondary-SQLServerLicenseTrackingSolution-Document',
@@ -131,6 +149,12 @@ mainSteps:
                 ],
                 'InstanceId': [
                     instanceId
+                ],
+                'TagKey': [
+                    tagKey
+                ],
+                'TagValue': [
+                    tagValue
                 ],
                 'SQLServerEELicenseConfiguration': [
                     sqlServerEELicenseConfig
@@ -156,7 +180,7 @@ mainSteps:
                 {
                     'Key': key,
                     'Values': [
-                        instanceId,
+                        values
                     ]
                 },
             ]
@@ -171,6 +195,8 @@ mainSteps:
           return {'message': status}
       InputPayload:
         instanceId: '{{ InstanceId }}'
+        tagKey: '{{ TagKey }}'
+        tagValue: '{{ TagValue }}'
         accountId: '{{ AccountId }}'
         region: '{{ Region }}'
         sqlServerEELicenseConfig: '{{ SQLServerEELicenseConfiguration }}'

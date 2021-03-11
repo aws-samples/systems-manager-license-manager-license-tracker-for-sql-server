@@ -30,6 +30,15 @@ Parameters:
     Default: '*'
     AllowedPattern: '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
     ConstraintDescription: Provide * to target all instances or specify an individual instnace ID
+  TagKey:
+    Description: (Optional) This parameter is required if you want to target all managed instances using tags
+    Type: String
+    Default: 'tag:LicenseTrackingSolution-ManagedInstance'
+    ConstraintDescription: Provide a valid tag key in the form of 'tag:ExampleTagKey'
+  TagValue:
+    Description: (Optional) This parameter is required if you want to target all managed instances using tags
+    Type: String
+    Default: 'true'
   SQLServerEELicenseConfiguration:
     Description: (Optional) License Configuration ARN for SQL Server Enterprise Edition
     Type: String
@@ -80,6 +89,16 @@ Resources:
               "description" : "(Required) Use * to target all instances in the account this solution is deployed into or you can specify an individual instance ID",
               "allowedPattern" : "\\*|^[m]{0,1}i-[a-z0-9]{8,17}",
               "default" : "*"
+            },
+            "TagKey" : {
+              "type" : "String",
+              "description" : "(Optional) This parameter is required if you want to target all managed instances using tags",
+              "default" : "tag:LicenseTrackingSolution-ManagedInstance"
+            },
+            "TagValue" : {
+              "type" : "String",
+              "description" : "(Optional) This parameter is required if you want to target all managed instances using tags",
+              "default" : "true"
             },
             "Region" : {
               "type" : "String",
@@ -146,9 +165,11 @@ Resources:
               "inputs" : {
                 "Runtime" : "python3.7",
                 "Handler" : "script_handler",
-                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  \n  instanceId = events['instanceId']\n  accountId = events['accountId']\n  region = events['region']\n  sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  \n  if instanceId == '*':\n    key = 'InstanceIds'\n  else:\n    key = 'ParameterValues'\n  \n  response = client.start_automation_execution(\n    DocumentName='Secondary-SQLServerLicenseTrackingSolution-Document',\n    Parameters={\n        'Region': [\n            region\n        ],\n        'AccountId': [\n            accountId\n        ],\n        'InstanceId': [\n            instanceId\n        ],\n        'SQLServerEELicenseConfiguration': [\n            sqlServerEELicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': key,\n            'Values': [\n                instanceId,\n            ]\n        },\n    ]\n  )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn't be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  \n  instanceId = events['instanceId']\n  accountId = events['accountId']\n  tagKey = events['tagKey']\n  tagValue = events['tagValue']\n  region = events['region']\n  sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  \n  if instanceId == '*':\n    key = tagKey\n    values = tagValue\n  else:\n    key = 'ParameterValues'\n    values = instanceId\n  \n  response = client.start_automation_execution(\n    DocumentName='Secondary-SQLServerLicenseTrackingSolution-Document',\n    Parameters={\n        'Region': [\n            region\n        ],\n        'AccountId': [\n            accountId\n        ],\n        'InstanceId': [\n            instanceId\n        ],\n        'TagKey': [\n            tagKey\n        ],\n        'TagValue': [\n            tagValue\n        ],\n        'SQLServerEELicenseConfiguration': [\n            sqlServerEELicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': key,\n            'Values': [\n                values\n            ]\n        },\n    ]\n  )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn't be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
                 "InputPayload" : {
                   "instanceId" : "{{ InstanceId }}",
+                  "tagKey" : "{{ TagKey }}",
+                  "tagValue" : "{{ TagValue }}",
                   "accountId" : "{{ AccountId }}",
                   "region" : "{{ Region }}",
                   "sqlServerEELicenseConfig" : "{{ SQLServerEELicenseConfiguration }}",
@@ -186,7 +207,19 @@ Resources:
           "parameters" : {
             "InstanceId" : {
               "type" : "String",
-              "description" : "The ID of the EC2 instance"
+              "description" : "(Required) Use * to target all instances in the account this solution is deployed into or you can specify an individual instance ID",
+              "allowedPattern" : "\\*|^[m]{0,1}i-[a-z0-9]{8,17}",
+              "default" : "*"
+            },
+            "TagKey" : {
+              "type" : "String",
+              "description" : "(Optional) This parameter is required if you want to target all managed instances using tags",
+              "default" : "tag:LicenseTrackingSolution-ManagedInstance"
+            },
+            "TagValue" : {
+              "type" : "String",
+              "description" : "(Optional) This parameter is required if you want to target all managed instances using tags",
+              "default" : "true"
             },
             "Region" : {
               "type" : "String",
@@ -365,7 +398,11 @@ Resources:
       DocumentVersion: "$DEFAULT"
       Parameters:
         InstanceId:
-          - !Ref InstanceId 
+          - !Ref InstanceId
+        TagKey:
+          - !Ref TagKey
+        TagValue:
+          - !Ref TagValue
         AccountId:
           - !Ref AWS::AccountId
         AutomationAssumeRole:
@@ -383,7 +420,6 @@ Resources:
         SQLServerDEVLicenseConfiguration:
           - !Ref SQLServerDEVLicenseConfiguration
       AssociationName: SQLServerLicenseTrackingSolution-Association
-
   IAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -446,7 +482,8 @@ Resources:
                           "ec2messages:FailMessage",
                           "ec2messages:AcknowledgeMessage",
                           "ec2messages:SendReply",
-                          "ec2messages:GetMessages"
+                          "ec2messages:GetMessages",
+                          "tag:GetResources"
                       ],
                       "Resource": "*"
                   }
