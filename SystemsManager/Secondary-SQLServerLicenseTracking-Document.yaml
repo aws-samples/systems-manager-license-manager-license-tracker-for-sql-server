@@ -184,7 +184,7 @@ mainSteps:
             $found = "false"
             
             try {
-              $webrequest = [System.Net.WebRequest]::Create("http://168.254.169.254/latest/dynamic/instance-identity/document")
+              $webrequest = [System.Net.WebRequest]::Create("http://169.254.169.254/latest/dynamic/instance-identity/document")
               $response = $webrequest.GetResponse()
               $stream = $response.GetResponseStream()
               $sr = new-object System.IO.StreamReader($stream)
