@@ -10,7 +10,7 @@ If your enterprise uses AWS, you can address this challenge in two ways:
 
 It’s still possible that your teams might provision software products not governed by these two options, which means you could receive an unwanted surprise in the next audit. 
 
-In this blog post, we show you how to build a solution that discovers and tracks your SQL Server instances. You can use the approach in this solution to target other commercial software such as Oracle, SAP, or IBM.
+In this blog post, we show you how to build a solution that discovers and tracks your Microsoft SQL Server instances. You can enhance this approach to target other commercial software such as Oracle, SAP, or IBM. Although this solution was developed for Amazon Elastic Compute Cloud (Amazon EC2) instances in single account in a single AWS Region, you can easily expand it to work across multiple regions and accounts within an AWS organization.  
 
 
 # Solution overview
@@ -31,14 +31,14 @@ In addition to AWS License Manager, the solution uses the following [AWS Systems
 
 To implement this solution, we need to complete the following steps:
 
-1.	Create the IAM service role and policy required to allow AWS Systems Manager to call other AWS services on your behalf.
+1.	Create the IAM service role and policy that allow AWS Systems Manager to call other AWS services on your behalf.
 2.	Create the Automation documents.
 3.	Create a State Manager association, which invokes the Automation document.
 4.	Test the solution.
 
-If you prefer to use a [CloudFormation template](https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTrackingSolution-template.yaml) to create these resources, launch the following stack.
+If you prefer to use a [CloudFormation template](https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/v1/SQLServerLicenseTrackingSolution-template.yaml) to create these resources, launch the following stack.
 
-[![cfn-stack](images/cfn-stack.png)]((https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/SQLServerLicenseTrackingSolution-template.yaml))
+[![cfn-stack](images/cfn-stack.png)]((https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/v1/SQLServerLicenseTrackingSolution-template.yaml))
 
 ## Create an IAM service role and policy
 
