@@ -25,7 +25,7 @@ Metadata:
         default: 'Developer Edition'
 Parameters:
   InstanceId:
-    Description: (Required) Use * to target all instances in the account this solution is deployed into or you can specify an individual instance ID'
+    Description: (Required) Use * to target all instances in this account or you can specify an individual instance ID
     Type: String
     Default: '*'
     AllowedPattern: '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
