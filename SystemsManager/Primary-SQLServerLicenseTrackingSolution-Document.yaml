@@ -6,15 +6,14 @@ outputs:
   - invokeSecondarySQLServerLicenseTrackingSolutionAutomation.result
 parameters:
   InstanceId:
-    description: (Required) Use * to target all instances in the account this solution is deployed into
+    description: (Required) Use * to target all instances in this account or specify an individual instance ID
     type: String
     default: '*'
     allowedPattern : '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
   TagKey:
     description: (Optional) This parameter is required if you want to target all managed instances using tags
     type: String
-    default: 'tag:LicenseTrackingSolution-ManagedInstance'
-    allowedPattern: '^tag:$'
+    default: 'LicenseTrackingSolution-ManagedInstance'
   TagValue:
     description: (Optional) This parameter is required if you want to target all managed instances using tags
     type: String
@@ -29,23 +28,23 @@ parameters:
     default: '{{global:ACCOUNT_ID}}'
   SQLServerEELicenseConfiguration:
     type: String
-    description: License Configuration for SQL Enterprise Edition
+    description: License Configuration for SQL Enterprise Edition or leave it as -
     default: '-'
   SQLServerEXPLicenseConfiguration:
     type: String
-    description: License Configuration for SQL Express Edition
+    description: License Configuration for SQL Express Edition or leave it as -
     default: '-'
   SQLServerSTDLicenseConfiguration:
     type: String
-    description: License Configuration for SQL Standard Edition
+    description: License Configuration for SQL Standard Edition or leave it as -
     default: '-'
   SQLServerWEBLicenseConfiguration:
     type: String
-    description: License Configuration for SQL Web Edition
+    description: License Configuration for SQL Web Edition or leave it as -
     default: '-'
   SQLServerDEVLicenseConfiguration:
     type: String
-    description: License Configuration for SQL Developer Edition
+    description: License Configuration for SQL Developer Edition or leave it as -
     default: '-'
   AutomationAssumeRole:
     type: String
@@ -78,7 +77,6 @@ mainSteps:
             )
             
             deletion_id = delete_inventory_response['DeletionId']
-            print(deletion_id)
            
             wait_loop = True
             while wait_loop == True:
@@ -132,7 +130,7 @@ mainSteps:
           automationAssumeRole = events['automationAssumeRole']
           
           if instanceId == '*':
-            key = tagKey
+            key = 'tag:'+tagKey
             values = tagValue
           else:
             key = 'ParameterValues'

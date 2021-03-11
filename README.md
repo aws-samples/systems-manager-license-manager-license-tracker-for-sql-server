@@ -99,7 +99,8 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
                 "ec2messages:FailMessage",
                 "ec2messages:AcknowledgeMessage",
                 "ec2messages:SendReply",
-                "ec2messages:GetMessages"
+                "ec2messages:GetMessages",
+                "tag:GetResources"
             ],
             "Resource": "*"
         }
@@ -166,6 +167,8 @@ The steps in the secondary document are executed in the following order.
 5.	Choose Simple execution. 
 6.	Under Input parameters, enter the following:
   * InstanceId: `<Use * to target all instances in the account this solution is deployed into>`
+  * TagKey: `<Specify a Tag name that will be used to filter the managed instances for this solution>`
+  * TagValue: `<Specify the Tag value corresponding with the TagKey>`
   * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
   * AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
   * LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
