@@ -134,9 +134,9 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 2.	Choose **Execute automation**, choose **Create document**, and then choose **Editor**.
 3.	For **Name**, enter  `Primary-SQLServerLicenseTrackingSolution-Document`.
 4.	In the editor, choose **Edit**, and then choose **OK** to confirm.
-5.	Delete the existing content and paste the contents of [Primary-SQLServerLicenseTrackingSolution-Document.yaml] (SystemsManager/Primary-SQLServerLicenseTrackingSolution-Document.yaml).
+5.	Delete the existing content and paste the contents of [Primary-SQLServerLicenseTrackingSolution-Document.yaml](SystemsManagerAutomation/Primary-SQLServerLicenseTrackingSolution-Document.yaml).
 6.	Choose **Create automation**, and then verify that the newly created document is displayed under Owned by me.
-7.	Follow the same steps described above to create the secondary Automation document - `Secondary-SQLServerLicenseTrackingSolution-Document` using the contents of [Secondary-SQLServerLicenseTrackingSolution-Document.yaml] (SystemsManager/Secondary-SQLServerLicenseTrackingSolution-Document.yaml).
+7.	Follow the same steps described above to create the secondary Automation document - `Secondary-SQLServerLicenseTrackingSolution-Document` using the contents of [Secondary-SQLServerLicenseTrackingSolution-Document.yaml](SystemsManagerAutomation/Secondary-SQLServerLicenseTrackingSolution-Document.yaml).
 
 ![](images/workflow.png)
 <p align="center">Figure 3: Execution sequence of Automation document</p>
