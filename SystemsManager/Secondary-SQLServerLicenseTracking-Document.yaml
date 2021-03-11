@@ -6,7 +6,7 @@ outputs:
   - updateLicenseManagerConfiguration.result
 parameters:
   InstanceId:
-    description: (Required) Use * to target all instances in the account this solution is deployed into
+    description: (Required) Use * to target all instances in this account or you can specify an individual instance ID
     type: String
     default: '*'
     allowedPattern : '\*|^[m]{0,1}i-[a-z0-9]{8,17}' 
@@ -20,19 +20,24 @@ parameters:
     default: '{{global:ACCOUNT_ID}}'
   SQLServerEELicenseConfiguration:
     type: String
-    description: (Optional) License Configuration ARN for SQL Enterprise Edition
-  SQLServerSTDLicenseConfiguration:
-    type: String
-    description: (Optional) License Configuration ARN for SQL Standard Edition
-  SQLServerWEBLicenseConfiguration:
-    type: String
-    description: (Optional) License Configuration ARN for SQL Web Edition
+    description: License Configuration for SQL Enterprise Edition or leave it as '-'
+    default: '-'
   SQLServerEXPLicenseConfiguration:
     type: String
-    description: (Optional) License Configuration ARN for SQL Express Edition
+    description: License Configuration for SQL Express Edition or leave it as '-'
+    default: '-'
+  SQLServerSTDLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Standard Edition or leave it as '-'
+    default: '-'
+  SQLServerWEBLicenseConfiguration:
+    type: String
+    description: License Configuration for SQL Web Edition or leave it as '-'
+    default: '-'
   SQLServerDEVLicenseConfiguration:
     type: String
-    description: (Optional) License Configuration ARN for SQL Developer Edition
+    description: License Configuration for SQL Developer Edition or leave it as '-'
+    default: '-'
   AutomationAssumeRole:
     type: String
     description: '(Required) The IAM role for this execution. If no role is specified, then AWS Systems Manager will be unable to complete the execution of this document.'
