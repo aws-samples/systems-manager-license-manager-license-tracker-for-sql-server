@@ -166,7 +166,7 @@ The steps in the secondary document are executed in the following order.
 4.	For Document version, choose Default at runtime.
 5.	Choose Simple execution. 
 6.	Under Input parameters, enter the following:
-  * InstanceId: `<Use * to target all instances in the account this solution is deployed into>`
+  * InstanceId: `<Use * to target all instances in this account or specify an individual instance ID>`
   * TagKey: `<Specify a Tag name that will be used to filter the managed instances for this solution>`
   * TagValue: `<Specify the Tag value corresponding with the TagKey>`
   * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
