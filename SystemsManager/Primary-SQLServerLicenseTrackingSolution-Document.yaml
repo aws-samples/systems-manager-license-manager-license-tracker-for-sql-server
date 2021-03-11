@@ -69,7 +69,6 @@ mainSteps:
             )
             
             deletion_id = delete_inventory_response['DeletionId']
-            print(deletion_id)
            
             wait_loop = True
             while wait_loop == True:
