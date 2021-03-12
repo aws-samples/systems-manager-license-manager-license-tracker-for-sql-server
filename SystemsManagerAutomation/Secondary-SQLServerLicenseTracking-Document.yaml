@@ -311,6 +311,8 @@ mainSteps:
       Script: |-
         import boto3
         import json
+        import re
+        from re import search
 
         def script_handler(events, context):
           
@@ -329,7 +331,7 @@ mainSteps:
 
             for instance in jsonSqlInfo:
             
-              if (instance["Edition"] == value):
+              if search(value,instance["Edition"]):
                 highestEdition = value
                 break
             if highestEdition:
