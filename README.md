@@ -166,9 +166,9 @@ The steps in the secondary document are executed in the following order.
 4.	For Document version, choose Default at runtime.
 5.	Choose Simple execution. 
 6.	Under Input parameters, enter the following:
-  * InstanceId: `<Use * to target all instances in this account or specify an individual instance ID>`
-  * TagKey: `<Specify a Tag name that will be used to filter the managed instances for this solution>`
-  * TagValue: `<Specify the Tag value corresponding with the TagKey. Ensure the same is used to tag your EC2 instances or virtual machines>`
+  * InstanceId: `<Use * to target all instances in this account or specify an individual instance ID, the default is *>`
+  * TagKey: `<Specify a Tag name that will be used to filter the managed instances for this solution, the default value is LicenseTrackingSolution-ManagedInstance. Ensure the same key is used to tag your EC2 instances or virtual machines>`
+  * TagValue: `<Specify the Tag value corresponding with the TagKey, the default value is true. Ensure the same value is used to tag your EC2 instances or virtual machines>`
   * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used. Ensure the same is used to tag your EC2 instances or virtual machines>`
   * AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
   * LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
