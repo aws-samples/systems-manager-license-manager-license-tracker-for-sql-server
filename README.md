@@ -57,7 +57,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
                 "license-manager:UpdateLicenseSpecificationsForResource"
             ],
             "Resource": [
-                "<ARN OF YOUR LICENSE CONFIGURATIONS>"
+                "(ARN OF YOUR LICENSE CONFIGURATIONS)"
             ]
         },
         {
@@ -67,12 +67,12 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
                 "ssm:SendCommand"
             ],
             "Resource": [
-                "arn:aws:ec2:*:<AWS-ACCOUNT-ID>:instance/*",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Primary-SQLServerLicenseTrackingSolution-Document:VersionId}",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Primary-SQLServerLicenseTrackingSolution-Document",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:automation-definition/Secondary-SQLServerLicenseTrackingSolution-Document:VersionId}",
-                "arn:aws:ssm:<REGION>:<AWS-ACCOUNT-ID>:document/Secondary-SQLServerLicenseTrackingSolution-Document",
-                "arn:aws:ssm:<REGION>:*:document/AWS-RunPowerShellScript"
+                "arn:aws:ec2:*:(AWS-ACCOUNT-ID):instance/*",
+                "arn:aws:ssm:(REGION):(AWS-ACCOUNT-ID):automation-definition/Primary-SQLServerLicenseTrackingSolution-Document:VersionId}",
+                "arn:aws:ssm:(REGION):(AWS-ACCOUNT-ID):document/Primary-SQLServerLicenseTrackingSolution-Document",
+                "arn:aws:ssm:(REGION):(AWS-ACCOUNT-ID):automation-definition/Secondary-SQLServerLicenseTrackingSolution-Document:VersionId}",
+                "arn:aws:ssm:(REGION):(AWS-ACCOUNT-ID):document/Secondary-SQLServerLicenseTrackingSolution-Document",
+                "arn:aws:ssm:(REGION):*:document/AWS-RunPowerShellScript"
             ]
         },
         {
