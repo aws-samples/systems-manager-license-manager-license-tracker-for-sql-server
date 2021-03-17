@@ -10,7 +10,7 @@ If your enterprise uses AWS, you can address this challenge in two ways:
 
 It’s still possible that your teams might provision software products not governed by these two options, which means you could receive an unwanted surprise in the next audit. 
 
-In this blog post, we show you how to build a solution that discovers and tracks your Microsoft SQL Server instances. You can enhance this approach to target other commercial software such as Oracle, SAP, or IBM. Although this solution was developed for Amazon Elastic Compute Cloud (Amazon EC2) instances in single account in a single AWS Region, you can easily expand it to work across multiple regions and accounts within an AWS organization.  
+In this blog post, we show you how to build a solution that discovers and tracks your Microsoft SQL Server instances. You can enhance this approach to target other commercial software such as Oracle, SAP, or IBM.
 
 
 # Solution overview
@@ -27,7 +27,7 @@ In addition to AWS License Manager, the solution uses the following [AWS Systems
 <p align="center">Figure 1: Solution architecture</p>
 
 
-# Walkthrough
+# Walkthroughn
 
 To implement this solution, we need to complete the following steps:
 
@@ -168,8 +168,8 @@ The steps in the secondary document are executed in the following order.
 6.	Under Input parameters, enter the following:
   * InstanceId: `<Use * to target all instances in this account or specify an individual instance ID>`
   * TagKey: `<Specify a Tag name that will be used to filter the managed instances for this solution>`
-  * TagValue: `<Specify the Tag value corresponding with the TagKey>`
-  * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used>`
+  * TagValue: `<Specify the Tag value corresponding with the TagKey. Ensure the same is used to tag your EC2 instances or virtual machines>`
+  * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used. Ensure the same is used to tag your EC2 instances or virtual machines>`
   * AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
   * LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
   * AutomationAssumeRole: choose `SQLServerLicenseTrackingSolution-Role`
