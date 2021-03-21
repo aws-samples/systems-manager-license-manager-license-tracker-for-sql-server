@@ -148,7 +148,7 @@ The steps in the secondary document are executed in the following order.
 2.	**Assert instance eligibility (assertInstanceEligibility)**: Checks if the EC2 instance is eligible for this document. The two criteria are:
   •	The instance is managed by Systems Manager and currently online.
   •	The instance is running on a Windows operating system.
-3.	**Is BYOL SQL installed (isBYOLSQLServerInstalled)*: Checks if Microsoft SQL Server is installed, is not a SQL Server License Included instance and if it exists then retrieve the SQL Server(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the SQL Servers 
+3.	**Is BYOL SQL installed (isBYOLSQLServerInstalled)**: Checks if Microsoft SQL Server is installed, is not a SQL Server License Included instance and if it exists then retrieve the SQL Server(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the SQL Servers 
 4.	**Conditional logic (foundSQLServerInstalledBranch)**: Performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) action based on the evaluation of the previous step. Defaults to the next step if MSSQL exists on the EC2 instance. Exits if unavailable.
 5.	**Update SSM Inventory (updateInventory)**: Uses the output of step 3 (metadata) to update Inventory with a custom inventory of type Custom:SQLServer for the EC2 instance.
 6.	**Update AWS License Manager (updateLicenseManager)**: Determines the most recent edition of SQL Server installed and updates the AWS License Manager configuration associated with the EC2 instance accordingly.
