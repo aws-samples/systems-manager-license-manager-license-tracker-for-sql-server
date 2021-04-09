@@ -79,7 +79,7 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
             "Sid": "sid2",
             "Effect": "Allow",
             "Action": "iam:PassRole",
-            "Resource": "arn:aws:iam::${AWS::AccountId}:role/SQLServerLicenseTrackingSolution-Role"
+            "Resource": "arn:aws:iam::(AWS-ACCOUNT-ID)}:role/SQLServerLicenseTrackingSolution-Role"
         },
         {
             "Sid": "sid3",
