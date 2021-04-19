@@ -1,0 +1,138 @@
+{
+    "Parameters": {
+        "MasterAccountId": {
+            "Type": "String",
+            "Description": "AWS Account ID of the primary account (the account from which AWS Systems Manager Automation will be initiated).",
+            "MaxLength": 12,
+            "MinLength": 12
+        }
+    },
+    "Resources": {
+        "AWSSystemsManagerAutomationExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "AWS": {
+                                    "Ref": "MasterAccountId"
+                                }
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ssm.amazonaws.com"
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                              "Service": "license-manager.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                              "Service": "license-manager.member-account.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole"
+                ],
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "ExecutionPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "resource-groups:ListGroupResources",
+                                        "tag:GetResources",
+                                        "license-manager:UpdateLicenseSpecificationsForResource",
+                                        "license-manager:GetLicenseConfiguration",
+                                        "ssm:DeleteInventory",
+                                        "ssm:PutInventory",
+                                        "ssm:GetInventorySchema",
+                                        "ssm:StartAutomationExecution",
+                                        "ssm:ListCommands",
+                                        "ssm:DescribeInstanceInformation",
+                                        "ssm:ListCommandInvocations",
+                                        "ssm:UpdateInstanceAssociationStatus",
+                                        "ec2:DescribeInstances",
+                                        "ec2:DescribeTags",
+                                        "license-manager:ListLicenseSpecificationsForResource",
+                                        "ec2messages:GetEndpoint",
+                                        "ec2messages:FailMessage",
+                                        "ec2messages:AcknowledgeMessage",
+                                        "ec2messages:SendReply",
+                                        "ec2messages:GetMessages",
+                                        "ssm:ListDocuments"
+                                    ],
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "iam:PassRole"
+                                    ],
+                                    "Resource": {
+                                        "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/SQLServerLTS-SystemsManager-AutomationExecutionRole"
+                                    }
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "license-manager:UpdateLicenseSpecificationsForResource",
+                                        "license-manager:GetLicenseConfiguration"
+                                    ],
+                                    "Resource": [
+                                        "*"
+                                    ]
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ssm:SendCommand"
+                                    ],
+                                    "Resource": [
+                                        "arn:aws:ec2:*:*:instance/*",
+                                        "arn:aws:ssm:*:*:automation-definition/Secondary-SQLServerLicenseTrackingSolution-Document:VersionId}",
+                                        "arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document",
+                                        "arn:aws:ssm:*:*:document/AWS-RunPowerShellScript"
+                                    ]
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ssm:DescribeDocument",
+                                        "ssm:ModifyDocumentPermission",
+                                        "ssm:DescribeDocumentPermission"
+                                    ],
+                                    "Resource": "arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
