@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "sid0",
+            "Effect": "Allow",
+            "Action": [
+                "organizations:ListAccountsForParent",
+                "ssm:ListDocuments",
+                "organizations:ListRoots",
+                "organizations:ListAccounts"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "sid1",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:DescribeDocument",
+                "ssm:ModifyDocumentPermission",
+                "ssm:DescribeDocumentPermission"
+            ],
+            "Resource": "arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document"
+        }
+    ]
+}
