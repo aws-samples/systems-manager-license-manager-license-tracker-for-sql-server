@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'CloudFormation template to deploy all the required services for the SQLServer License Tracking Solution across accounts and regions'
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups: 
+      - 
+        Label: 
+          default: 'Primary Automation Document'
+        Parameters: 
+          - SQLServerEELicenseConfiguration
+          - SQLServerSTDLicenseConfiguration
+          - SQLServerWEBLicenseConfiguration
+          - SQLServerEXPLicenseConfiguration
+          - SQLServerDEVLicenseConfiguration
+          - Targets
+          - Regions
+          - TagKey
+          - TagValue
+          - ExecutionAccountId
+    ParameterLabels:
+      SQLServerEELicenseConfiguration:
+        default: 'Enterprise Edition'
+      SQLServerSTDLicenseConfiguration:
+        default: 'Standard Edition'
+      SQLServerWEBLicenseConfiguration:
+        default: 'Web Edition'
+      SQLServerEXPLicenseConfiguration:
+        default: 'Express Edition'
+      SQLServerDEVLicenseConfiguration:
+        default: 'Developer Edition'
+      Targets:
+        default: 'Targets'
+      Regions:
+        default: 'Regions'
+      TagKey:
+        default: 'TagKey'
+      TagValue:
+        default: 'TagValue'
+      ExecutionAccountId:
+        default: 'ExecutionAccountId'
+Parameters:
+  Targets:
+    Description: AWS account IDs or Organization Unit IDs that you want managed by this solution
+    Type: String
+    Default: '{{global:ACCOUNT_ID}}'
+  Regions:
+    Description: AWS Regions that you want managed by this solution
+    Type: String
+    Default: '{{global:REGION}}'
+  TagKey:
+    Description: (Optional) This parameter is required if you want to target all managed instances using tags
+    Type: String
+    Default: 'LicenseTrackingSolution-ManagedInstance'
+    ConstraintDescription: Provide a valid tag key in the form of 'tag:ExampleTagKey'
+  TagValue:
+    Description: (Optional) This parameter is required if you want to target all managed instances using tags
+    Type: String
+    Default: 'true'
+  ExecutionAccountId:
+    Description: (Required) Central AWS Account ID which will be hosting this solution. If you are using AWS Organizations then you can specify the root/management account.
+    Type: String
+  SQLServerEELicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Enterprise Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Enterprise Edition or leave it as -
+  SQLServerSTDLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Standard Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Standard Edition or leave it as -
+  SQLServerWEBLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Web Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Web Edition or leave it as -
+  SQLServerEXPLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Express Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Express Edition or leave it as -
+  SQLServerDEVLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Developer Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Developer Edition or leave it as -
+  BucketName:
+    Description: The name of the S3 bucket where the aggregated data is stored.
+    Type: String
+  BucketRegion:
+    Description: The AWS Region with the S3 bucket targeted by the Resource Data Sync for eg. ap-southeast-2
+    Type: String
+  BucketPrefix:
+    Description: An Amazon S3 prefix for the bucket.
+    Type: String
+  KMSKeyArn:
+    Description: The ARN of an encryption key for a destination in Amazon S3. You can use a KMS key to encrypt inventory data in Amazon S3. You must specify a key that exist in the same region as the destination Amazon S3 bucket.
+    Type: String
+Resources:
+  SecondarySSMDocument:
+    Type: 'AWS::SSM::ResourceDataSync'
+    Properties:
+      SyncName: 
+        "SQLServerLTS-ResourceDataSync"
+      BucketName: 
+        !Ref BucketName
+      BucketRegion: 
+        !Ref BucketRegion
+      SyncFormat: 
+        "JsonSerDe"
+      BucketPrefix: 
+        !Ref BucketPrefix
+      KMSKeyArn: 
+        !Ref KMSKeyArn
+  SimonTestTopicStackSet:
+    Type: AWS::CloudFormation::StackSet
+    Properties:
+      AutoDeployment:
+        Enabled: true
+        RetainStacksOnAccountRemoval: false
+      StackSetName: SimonTestTopicStackSet
+      PermissionModel: SERVICE_MANAGED
+      StackInstancesGroup:
+        - Regions:
+            - us-east-1
+            - ap-southeast-2
+          DeploymentTargets:
+            OrganizationalUnitIds:
+              - ou-abc1-abc12ab1
+      TemplateBody: |
+        Resources:
+          SimonTestTopic:
+            Type: AWS::SNS::Topic
+            Properties:
+              DisplayName: !Sub 'simon-test-topic-${AWS::Region}-${AWS::AccountId}'
+              TopicName: !Sub 'simon-test-topic-${AWS::Region}-${AWS::AccountId}'

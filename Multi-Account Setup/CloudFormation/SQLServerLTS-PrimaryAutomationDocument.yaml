@@ -1,0 +1,270 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'CloudFormation template to deploy the Primary Automation document for SQL License Tracking Solution'
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups: 
+      - 
+        Label: 
+          default: 'License Manager Configuration for SQL Servers'
+        Parameters: 
+          - SQLServerEELicenseConfiguration
+          - SQLServerSTDLicenseConfiguration
+          - SQLServerWEBLicenseConfiguration
+          - SQLServerEXPLicenseConfiguration
+          - SQLServerDEVLicenseConfiguration
+    ParameterLabels:
+      SQLServerEELicenseConfiguration:
+        default: 'Enterprise Edition'
+      SQLServerSTDLicenseConfiguration:
+        default: 'Standard Edition'
+      SQLServerWEBLicenseConfiguration:
+        default: 'Web Edition'
+      SQLServerEXPLicenseConfiguration:
+        default: 'Express Edition'
+      SQLServerDEVLicenseConfiguration:
+        default: 'Developer Edition'
+    - 
+        Label: Resource target details for License Tracker solution'
+        Parameters: 
+          - Targets
+          - Regions
+          - TagKey
+          - TagValue
+    ParameterLabels:
+      Targets:
+        default: 'Targets'
+      Regions:
+        default: 'Regions'
+      TagKey:
+        default: 'TagKey'
+      TagValue:
+        default: 'TagValue'
+Parameters:
+  Targets:
+    Description: AWS account IDs or Organization Unit IDs that you want managed by this solution
+    Type: String
+    Default: '{{global:ACCOUNT_ID}}'
+  Regions:
+    Description: AWS Regions that you want managed by this solution
+    Type: String
+    Default: '{{global:REGION}}'
+  TagKey:
+    Description: (Optional) This parameter is required if you want to target all managed instances using tags
+    Type: String
+    Default: 'LicenseTrackingSolution-ManagedInstance'
+    ConstraintDescription: Provide a valid tag key in the form of 'tag:ExampleTagKey'
+  TagValue:
+    Description: (Optional) This parameter is required if you want to target all managed instances using tags
+    Type: String
+    Default: 'true'
+  ExecutionAccountId:
+    Description: (Required) Central AWS Account ID which will be hosting this solution. If you are using AWS Organizations then you can specify the root/management account.
+    Type: String
+  SQLServerEELicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Enterprise Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Enterprise Edition or leave it as -
+  SQLServerSTDLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Standard Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Standard Edition or leave it as -
+  SQLServerWEBLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Web Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Web Edition or leave it as -
+  SQLServerEXPLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Express Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Express Edition or leave it as -
+  SQLServerDEVLicenseConfiguration:
+    Description: License Configuration ARN for SQL Server Developer Edition
+    Type: String
+    Default: '-'
+    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
+    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Developer Edition or leave it as -
+Resources:
+  PrimarySSMDocument:
+    Type: 'AWS::SSM::Document'
+    Properties:
+      Name: Primary-SQLServerLicenseTrackingSolution-Document
+      Content: !Sub |
+        {
+          "description" : "Primary document for SQL License Tracking Solution",
+          "schemaVersion" : "0.3",
+          "assumeRole" : "{{ AutomationAssumeRole }}",
+          "outputs" : [ 
+            "deleteCustomInventory.result",
+            "invokeSecondarySQLServerLicenseTrackingSolutionAutomation.result"
+          ],
+          "parameters" : {
+            "Targets" : {
+              "type" : "String",
+              "description" : "AWS account IDs or Organization Unit IDs that you want managed by this solution",
+              "default" : "{{global:ACCOUNT_ID}}"
+            },
+            "Regions" : {
+              "type" : "String",
+              "description" : "AWS Regions that you want managed by this solution",
+              "default" : "{{global:REGION}}"
+            },
+            "TagKey" : {
+              "type" : "String",
+              "description" : "(Optional) This parameter is required if you want to target all managed instances using tags",
+              "default" : "LicenseTrackingSolution-ManagedInstance"
+            },
+            "TagValue" : {
+              "type" : "String",
+              "description" : "(Optional) This parameter is required if you want to target all managed instances using tags",
+              "default" : "true"
+            },
+            "ExecutionAccountId" : {
+              "type" : "String",
+              "description" : "(Required) Central AWS Account ID which will be hosting this solution. If you are using AWS Organizations then you can specify the root/management account"
+            },
+            "SQLServerEELicenseConfiguration" : {
+              "type" : "String",
+              "description" : "License Configuration ARN for SQL Enterprise Edition or leave it as -",
+              "default" : "${SQLServerEELicenseConfiguration}"
+            },
+            "SQLServerEXPLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "License Configuration ARN for SQL Express Edition or leave it as -",
+              "default" : "${SQLServerEXPLicenseConfiguration}"
+            },
+            "SQLServerSTDLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "License Configuration ARN for SQL Standard Edition or leave it as -",
+              "default" : "${SQLServerSTDLicenseConfiguration}"
+            },
+            "SQLServerWEBLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "License Configuration ARN for SQL Web Edition or leave it as -",
+              "default" : "${SQLServerWEBLicenseConfiguration}"
+            },
+            "SQLServerDEVLicenseConfiguration" : {
+              "type" : "String",
+              "description" : "License Configuration ARN for SQL Developer Edition or leave it as -",
+              "default" : "${SQLServerDEVLicenseConfiguration}"
+            },
+            "AutomationAssumeRole" : {
+              "type" : "String",
+              "description" : "(Required) The IAM role required to execute this document (Select SQLServerLTS-SystemsManager-AutomationAdministrationRole from the drop-down)"
+            }
+          },
+          "mainSteps" : [ {
+              "name" : "deleteCustomInventory",
+              "description" : "This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances.",
+              "action" : "aws:executeScript",
+              "inputs" : {
+                "Runtime" : "python3.7",
+                "Handler" : "script_handler",
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\nimport time\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  \n  get_inventory_response = client.get_inventory_schema(\n    TypeName='Custom:SQLServer'\n  )\n  \n  if get_inventory_response['Schemas']:\n    delete_inventory_response = client.delete_inventory(\n      TypeName='Custom:SQLServer',\n      SchemaDeleteOption='DeleteSchema'\n    )\n    \n    deletion_id = delete_inventory_response['DeletionId']\n    print(deletion_id)\n   \n    wait_loop = True\n    while wait_loop == True:\n      describe_inventory_deletions_response = client.describe_inventory_deletions(\n        DeletionId=deletion_id\n      )\n      if describe_inventory_deletions_response['InventoryDeletions']:\n        if describe_inventory_deletions_response['InventoryDeletions'][0]['LastStatus'] == \"Complete\":\n          status = \"Custom:SQLServer schema has been deleted successfuly. DeletionID: \"+deletion_id\n          wait_loop = False\n          break\n        else:\n          time.sleep(60)\n\n  else:\n    status = \"Custom:SQLServer type doesn't exist in the Inventory so continuing to the next step.\"\n    \n  return {'message': status}\n"
+              },
+              "nextStep" : "invokeSecondarySQLServerLicenseTrackingSolutionAutomation",
+              "outputs" : [ {
+                "Name" : "result",
+                "Selector" : "$.Payload.message",
+                "Type" : "String"
+              } ],
+              "onFailure": "Abort",
+              "isCritical" : true
+            }, {
+              "name" : "invokeSecondarySQLServerLicenseTrackingSolutionAutomation",
+              "description" : "This step invokes the SecondarySQLServerLicenseTrackingSolutionDocument automation",
+              "action" : "aws:executeScript",
+              "inputs" : {
+                "Runtime" : "python3.7",
+                "Handler" : "script_handler",
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  tagKey = events['tagKey']\n  tagValue = events['tagValue']\n  sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  accountId = events['accountId']\n  region = events['region']\n  executionAccountId = events['executionAccountId']\n  \n  documentName = 'arn:aws:ssm:'+region+':'+executionAccountId+':document/Secondary-SQLServerLicenseTrackingSolution-Document'\n  \n  response = client.start_automation_execution(\n    DocumentName=documentName,\n    Parameters={\n        'InstanceId': [\n            '*'\n        ],\n        'TagKey': [\n            tagKey\n        ],\n        'TagValue': [\n            tagValue\n        ],\n        'SQLServerEELicenseConfiguration': [\n            sqlServerEELicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': 'tag:'+tagKey,\n            'Values': [\n                tagValue\n            ]\n        }\n    ]\n  )\n  \n  if response["AutomationExecutionId"]:\n    status = "Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - " + response["AutomationExecutionId"] + " for more details"\n  else:\n    status = "Secondary-SQLServerLicenseTrackingSolution-Document was not invoked"\n    raise Exception(f"It appears that this step couldn't be completed due to an unknown error. Please check the logs for more details") \n  \n  return {'message': status}",
+                "InputPayload" : {
+                  "tagKey" : "{{ TagKey }}",
+                  "tagValue" : "{{ TagValue }}",
+                  "accountId" : "{{ global:ACCOUNT_ID }}",
+                  "region" : "{{ global:REGION }}",
+                   "executionAccountId" : "{{ ExecutionAccountId }}",
+                  "sqlServerEELicenseConfig" : "{{ SQLServerEELicenseConfiguration }}",
+                  "sqlServerSTDLicenseConfig" : "{{ SQLServerSTDLicenseConfiguration }}",
+                  "sqlServerEXPLicenseConfig" : "{{ SQLServerEXPLicenseConfiguration }}",
+                  "sqlServerWEBLicenseConfig" : "{{ SQLServerWEBLicenseConfiguration }}",
+                  "sqlServerDEVLicenseConfig" : "{{ SQLServerDEVLicenseConfiguration }}",
+                  "automationAssumeRole" : "{{ AutomationAssumeRole }}"
+                }
+              },
+              "outputs" : [ {
+                "Name" : "result",
+                "Selector" : "$.Payload.message",
+                "Type" : "String"
+              } ],
+              "isEnd" : true,
+              "onFailure": "Abort",
+              "isCritical" : true
+            } ]
+          }
+      DocumentType: "Automation"
+  SSMAssociation:
+    Type: "AWS::SSM::Association"
+    Properties:
+      Name: !Ref PrimarySSMDocument
+      DocumentVersion: "$DEFAULT"
+      Parameters:
+        Targets:
+          - !Ref Targets
+        Regions:
+          - !Ref Regions
+        TagKey:
+          - !Ref TagKey
+        TagValue:
+          - !Ref TagValue
+        AutomationAssumeRole:
+          - !GetAtt IAMRole.Arn
+        SQLServerEELicenseConfiguration:
+          - !Ref SQLServerEELicenseConfiguration
+        SQLServerEXPLicenseConfiguration:
+          - !Ref SQLServerEXPLicenseConfiguration
+        SQLServerSTDLicenseConfiguration:
+          - !Ref SQLServerSTDLicenseConfiguration
+        SQLServerWEBLicenseConfiguration:
+          - !Ref SQLServerWEBLicenseConfiguration
+        SQLServerDEVLicenseConfiguration:
+          - !Ref SQLServerDEVLicenseConfiguration
+      AssociationName: SQLServerLicenseTrackingSolution-Association
+  IAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: /
+      RoleName: SQLServerLTS-SystemsManager-AutomationAdministrationRole
+      AssumeRolePolicyDocument: >-
+        {"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"Service":"ssm.amazonaws.com"},"Action":"sts:AssumeRole"}]}
+      MaxSessionDuration: 3600
+      Policies: 
+        - PolicyName: SQLServerLTS-SystemsManager-AutomationExecution-Policy
+          PolicyDocument: !Sub |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                  {
+                      "Sid": "sid0",
+                      "Effect": "Allow",
+                      "Action": [
+                          "organizations:ListAccountsForParent",
+                          "ssm:ListDocuments"
+                      ],
+                      "Resource": "*"
+                  },
+                  {
+                      "Sid": "sid1",
+                      "Effect": "Allow",
+                      "Action": "sts:AssumeRole",
+                      "Resource": "arn:aws:iam::*:role/SQLServerLTS-SystemsManager-AutomationExecutionRole"
+                  }
+              ]
+            }
+      Description: Configure the SQLServerLTS-SystemsManager-AutomationAdministrationRole to enable use of AWS Systems Manager cross-account/region Automation execution
