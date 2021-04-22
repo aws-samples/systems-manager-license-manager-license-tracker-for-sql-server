@@ -38,10 +38,10 @@ parameters:
     type: String
     description: License Configuration for SQL Developer Edition or leave it as -
     default: '-'
- AutomationAssumeRole:
+  AutomationAssumeRole:
     type: String
-    description: The IAM role required to execute this document. If no role is specified, then AWS Systems Manager will be unable to complete the execution of this document.
-    default: SQLServerLTS-SystemsManager-AutomationExecutionRole
+    description: (Reqired) The IAM role for this execution. Unless required DO NOT UPDATE THIS
+    default: AWS-SystemsManager-AutomationExecutionRole
 mainSteps:
   - name: removeLicenseConfigDataForInstance
     action: 'aws:executeScript'
@@ -206,9 +206,9 @@ mainSteps:
               {
                 $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$s
                 $o = [pscustomobject]@{
-                Name = $p
-                Edition = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Edition
                 Version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Version
+                Edition = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Edition
+                Name = $p
                 }
                 $server_info_list = $list.Add($o)
               }

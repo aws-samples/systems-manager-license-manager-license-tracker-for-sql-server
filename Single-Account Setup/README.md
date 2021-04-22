@@ -27,7 +27,7 @@ In addition to AWS License Manager, the solution uses the following [AWS Systems
 <p align="center">Figure 1: Solution architecture</p>
 
 
-# Walkthroughn
+# Walkthrough
 
 To implement this solution, we need to complete the following steps:
 

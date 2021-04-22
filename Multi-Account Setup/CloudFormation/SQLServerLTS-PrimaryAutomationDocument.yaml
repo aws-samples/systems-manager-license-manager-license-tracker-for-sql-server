@@ -255,7 +255,9 @@ Resources:
                       "Effect": "Allow",
                       "Action": [
                           "organizations:ListAccountsForParent",
-                          "ssm:ListDocuments"
+                          "ssm:ListDocuments",
+                          "cloudformation:*",
+                          "ssm:CreateDocument"
                       ],
                       "Resource": "*"
                   },

@@ -11,47 +11,49 @@ Parameters:
   OrganizationID:
     Description: AWS Organization ID.
     Type: String
-  Resources:
-    S3Bucket:
-      Type: 'AWS::S3::Bucket'
-      DeletionPolicy: Retain
-      Properties:
-        BucketName: !Ref BucketName
-    S3BucketPolicy:
-      Type: "AWS::S3::BucketPolicy"
-      Properties:
-        Bucket: !Ref S3Bucket
-        PolicyDocument: 
-          Version: "2012-10-17"
-          Statement: 
-          - 
-            Sid: "SSMBucketPermissionsCheck"
-            Effect: "Allow"
-            Principal: 
-              Service: "ssm.amazonaws.com"
-            Action: "s3:GetBucketAcl"
-            Resource: !Sub "arn:aws:s3:::${S3Bucket}"
-          - 
-            Sid: " SSMBucketDelivery"
-            Effect: "Allow"
-            Principal: 
-              Service: "ssm.amazonaws.com"
-            Action: "s3:PutObject"
-            Resource: !Sub "arn:aws:s3:::${S3Bucket}/*/accountid=*/*"
-            Condition: 
-              StringEquals: 
-                "s3:RequestObjectTag/OrgId": 
-                  !Sub 
-                    - "${OrgID}"
-                    - { OrgID: !Ref OrganizationID}
-                "s3:x-amz-acl": "bucket-owner-full-control"
-          - 
-            Sid: " SSMBucketDeliveryTagging"
-            Effect: "Allow"
-            Principal: 
-              Service: "ssm.amazonaws.com"
-            Action: "s3:PutObjectTagging"
-            Resource: !Sub "arn:aws:s3:::${S3Bucket}/*/accountid=*/*"
-
-
-
+Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+        - 
+          Sid: "SSMBucketPermissionsCheck"
+          Effect: "Allow"
+          Principal: 
+            Service: "ssm.amazonaws.com"
+          Action: "s3:GetBucketAcl"
+          Resource: !Sub "arn:aws:s3:::${S3Bucket}"
+        - 
+          Sid: " SSMBucketDelivery"
+          Effect: "Allow"
+          Principal: 
+            Service: "ssm.amazonaws.com"
+          Action: "s3:PutObject"
+          Resource: !Sub "arn:aws:s3:::${S3Bucket}/*/accountid=*/*"
+          Condition: 
+            StringEquals: 
+              "s3:RequestObjectTag/OrgId": 
+                !Sub 
+                  - "${OrgID}"
+                  - { OrgID: !Ref OrganizationID}
+              "s3:x-amz-acl": "bucket-owner-full-control"
+        - 
+          Sid: " SSMBucketDeliveryTagging"
+          Effect: "Allow"
+          Principal: 
+            Service: "ssm.amazonaws.com"
+          Action: "s3:PutObjectTagging"
+          Resource: !Sub "arn:aws:s3:::${S3Bucket}/*/accountid=*/*"

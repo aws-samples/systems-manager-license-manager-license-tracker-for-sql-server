@@ -7,11 +7,11 @@ outputs:
 parameters:
   Targets:
     type: String
-    description: AWS account IDs or OUs that should be covered by this solution
+    description: AWS account IDs or Organization Unit IDs that you want managed by this solution
     default: '{{global:ACCOUNT_ID}}'
   Regions:
     type: String
-    description: AWS Regions that should be covered by this solution
+    description: AWS Regions that you want managed by this solution
     default: '{{global:REGION}}'
   TagKey:
     description: (Optional) This parameter is required if you want to target all managed instances using tags
@@ -21,6 +21,9 @@ parameters:
     description: (Optional) This parameter is required if you want to target all managed instances using tags
     type: String
     default: 'true'
+  ExecutionAccountId:
+    description: (Required) Central AWS Account ID which will be hosting this solution. If you are using AWS Organizations then you can specify the root/management account. 
+    type: String
   SQLServerEELicenseConfiguration:
     type: String
     description: License Configuration for SQL Enterprise Edition or leave it as -
@@ -43,8 +46,7 @@ parameters:
     default: '-'
   AutomationAssumeRole:
     type: String
-    description: The IAM role for this execution. Unless required DO NOT UPDATE THIS
-    default: AWS-SystemsManager-AutomationAdministrationRole
+    description: The IAM role required to execute this document (Select SQLServerLTS-SystemsManager-AutomationAdministrationRole from the drop-down)
 mainSteps:
   - name: deleteCustomInventory
     description: 'This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances.'
@@ -124,8 +126,9 @@ mainSteps:
           automationAssumeRole = events['automationAssumeRole']
           accountId = events['accountId']
           region = events['region']
+          executionAccountId = events['executionAccountId']
           
-          documentName = 'arn:aws:ssm:'+region+':784315950497:document/Secondary-SQLServerLicenseTrackingSolution-Document'
+          documentName = 'arn:aws:ssm:'+region+':'+executionAccountId+':document/Secondary-SQLServerLicenseTrackingSolution-Document'
           
           response = client.start_automation_execution(
             DocumentName=documentName,
@@ -186,6 +189,7 @@ mainSteps:
         sqlServerDEVLicenseConfig: '{{ SQLServerDEVLicenseConfiguration }}'
         accountId: '{{global:ACCOUNT_ID}}'
         region: '{{global:REGION}}'
+        executionAccountId: '{{ ExecutionAccountId }}'
         automationAssumeRole: '{{ AutomationAssumeRole }}'
     outputs:
       - Name: result
