@@ -84,8 +84,7 @@ Resources:
                   - 'arn:aws:ec2:*:*:instance/*'
                   - >-
                     arn:aws:ssm:*:*:automation-definition/Secondary-SQLServerLicenseTrackingSolution-Document:VersionId}
-                  - >-
-                    arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document
+                  - 'arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document'
                   - 'arn:aws:ssm:*:*:document/AWS-RunPowerShellScript'
               - Effect: Allow
                 Action:

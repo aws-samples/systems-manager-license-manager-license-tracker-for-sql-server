@@ -114,12 +114,12 @@ Resources:
                     "Region" : {
                       "type" : "String",
                       "description" : "AWS Region",
-                      "default" : "${AWS::Region}"
+                      "default" : "{{global:REGION}}"
                     },
                     "AccountId" : {
                       "type" : "String",
                       "description" : "AWS Account ID",
-                      "default" : "${AWS::AccountId}"
+                      "default" : "{{global:ACCOUNT_ID}}"
                     },
                     "SQLServerEELicenseConfiguration" : {
                       "type" : "String",

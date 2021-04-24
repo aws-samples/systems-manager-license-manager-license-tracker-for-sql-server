@@ -35,6 +35,7 @@ Resources:
           import boto3
           import json
           import botocore
+          import cfnresponse
 
           def lambda_handler(events, context):
             organization = boto3.client('organizations')
@@ -74,6 +75,10 @@ Resources:
             if response['ResponseMetadata']:
               if response['ResponseMetadata']['HTTPStatusCode'] == 200:
                 print(f"Successfully modified Secondary-SQLServerLicenseTrackingSolution-Document permissions to be shared with these accounts: "+','.join(accountList))
+                responseValue = response['ResponseMetadata']
+                responseData = {}
+                responseData['Data'] = responseValue
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
               else:
                 raise Exception(f"There was a problem modifying the permissions of Secondary-SQLServerLicenseTrackingSolution-Document, check the logs for more details")
             else:
@@ -103,5 +108,11 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: !GetAtt ScheduledRule.Arn
+  InitialLambdaInvocation:
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn: LambdaFunction
+    Version: "1.0"
+    Properties:
+      ServiceToken: !GetAtt LambdaFunction.Arn
 
 
