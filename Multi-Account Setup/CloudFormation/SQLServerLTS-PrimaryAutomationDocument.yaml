@@ -43,11 +43,9 @@ Parameters:
   Targets:
     Description: AWS account IDs or Organization Unit IDs that you want managed by this solution
     Type: String
-    Default: '{{global:ACCOUNT_ID}}'
   Regions:
     Description: AWS Regions that you want managed by this solution
     Type: String
-    Default: '{{global:REGION}}'
   TagKey:
     Description: (Optional) This parameter is required if you want to target all managed instances using tags
     Type: String
@@ -150,6 +148,11 @@ Resources:
             "AutomationAssumeRole" : {
               "type" : "String",
               "description" : "(Required) The IAM role required to execute this document (Select SQLServerLTS-SystemsManager-AutomationAdministrationRole from the drop-down)"
+            },
+            "DocumentName" : {
+              "type" : "String",
+              "description" : "Document ARN of the secondary document",
+              "default" : "arn:aws:ssm:{{global:REGION}}:${AWS::AccountId}:document/Secondary-SQLServerLicenseTrackingSolution-Document"
             }
           },
           "mainSteps" : [ {
@@ -176,20 +179,21 @@ Resources:
               "inputs" : {
                 "Runtime" : "python3.7",
                 "Handler" : "script_handler",
-                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  tagKey = events['tagKey']\n  tagValue = events['tagValue']\n  sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  accountId = events['accountId']\n  targets = events['targets']\n  regions = events['regions']\n  region = events['region']\n  \n  print(targets)\n  \n  documentName = 'Secondary-SQLServerLicenseTrackingSolution-Document'\n  \n  response = client.start_automation_execution(\n    DocumentName=documentName,\n    Parameters={\n        'InstanceId': [\n            '*'\n        ],\n        'TagKey': [\n            tagKey\n        ],\n        'TagValue': [\n            tagValue\n        ],\n        'SQLServerEELicenseConfiguration': [\n            sqlServerEELicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': 'tag:'+tagKey,\n            'Values': [\n                tagValue\n            ]\n        }\n    ],\n    TargetLocations=[\n        {\n            'Accounts': [\n                targets\n            ],\n            'Regions': [\n                regions\n            ],\n            'TargetLocationMaxConcurrency': '4',\n            'TargetLocationMaxErrors': '4'\n        }\n    ]\n  )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn\\'t be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  tagKey = events['tagKey']\n  tagValue = events['tagValue']\n  sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  accountId = events['accountId']\n  targets = events['targets'].split(\",\")\n  regions = events['regions'].split(\",\")\n  region = events['region']\n  \n  documentName = events['documentName']\n  \n  response = client.start_automation_execution(\n    DocumentName=documentName,\n    Parameters={\n        'InstanceId': [\n            '*'\n        ],\n        'TagKey': [\n            tagKey\n        ],\n        'TagValue': [\n            tagValue\n        ],\n        'SQLServerEELicenseConfiguration': [\n            sqlServerEELicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': 'tag:'+tagKey,\n            'Values': [\n                tagValue\n            ]\n        }\n    ],\n    TargetLocations=[\n        {\n            'Accounts': targets,\n            'Regions': regions,\n            'TargetLocationMaxConcurrency': '4',\n            'TargetLocationMaxErrors': '4',\n            'ExecutionRoleName': 'SQLServerLTS-SystemsManager-AutomationExecutionRole'\n        }\n    ]\n  )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn\\'t be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
                 "InputPayload" : {
                   "tagKey" : "{{ TagKey }}",
                   "tagValue" : "{{ TagValue }}",
                   "accountId" : "{{ global:ACCOUNT_ID }}",
                   "targets" : "{{ Targets }}",
-                  "regions" : "{{ Regions }}"
+                  "regions" : "{{ Regions }}",
                   "region" : "{{ global:REGION }}",
                   "sqlServerEELicenseConfig" : "{{ SQLServerEELicenseConfiguration }}",
                   "sqlServerSTDLicenseConfig" : "{{ SQLServerSTDLicenseConfiguration }}",
                   "sqlServerEXPLicenseConfig" : "{{ SQLServerEXPLicenseConfiguration }}",
                   "sqlServerWEBLicenseConfig" : "{{ SQLServerWEBLicenseConfiguration }}",
                   "sqlServerDEVLicenseConfig" : "{{ SQLServerDEVLicenseConfiguration }}",
-                  "automationAssumeRole" : "{{ AutomationAssumeRole }}"
+                  "automationAssumeRole" : "{{ AutomationAssumeRole }}",
+                  "documentName" : "{{ DocumentName }}"
                 }
               },
               "outputs" : [ {
