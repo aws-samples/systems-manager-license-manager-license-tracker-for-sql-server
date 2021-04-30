@@ -1,24 +1,22 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "CloudFormation (stackset) template to deploy SQLServerLTS-SystemsManager-AutomationExecutionRole in all member accounts"
+Description: "CloudFormation (stackset) template to deploy AWS-SystemManager-AutomationExecutionRole in all member accounts"
 Parameters:
-  MasterAccountId:
+  ManagementAccountId:
     Type: String
-    Description: >-
-      AWS Account ID of the primary account (the account from which AWS Systems
-      Manager Automation will be initiated).
+    Description: AWS Account ID of the management/root account (account from which AWS Systems Manager Automation will be initiated).
     MaxLength: 12
     MinLength: 12
 Resources:
   AWSSystemsManagerAutomationExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: SQLServerLTS-SystemsManager-AutomationExecutionRole
+      RoleName: AWS-SystemManager-AutomationExecutionRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Ref MasterAccountId
+              AWS: !Ref ManagementAccountId
             Action:
               - 'sts:AssumeRole'
           - Effect: Allow
@@ -70,7 +68,7 @@ Resources:
                 Action:
                   - 'iam:PassRole'
                 Resource: !Sub >-
-                  arn:${AWS::Partition}:iam::${AWS::AccountId}:role/SQLServerLTS-SystemsManager-AutomationExecutionRole
+                  arn:${AWS::Partition}:iam::${AWS::AccountId}:role/AWS-SystemManager-AutomationExecutionRole
               - Effect: Allow
                 Action:
                   - 'license-manager:UpdateLicenseSpecificationsForResource'

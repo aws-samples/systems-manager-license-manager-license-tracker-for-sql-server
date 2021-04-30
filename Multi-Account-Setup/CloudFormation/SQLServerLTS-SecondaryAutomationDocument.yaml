@@ -1,17 +1,19 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: 'CloudFormation template to deploy the Secondary Automation document for SQL License Tracking Solution'
+Description: 'CloudFormation template to deploy the Secondary Automation document along with a lambda function & scheduled trigger rule to manage cross-account sharing permissions of the document for SQL License Tracking Solution'
 Parameters:
-  MasterAccountId:
+  ManagementAccountId:
     Type: String
-    Description: >-
-      AWS Account ID of the primary account (the account from which AWS Systems
-      Manager Automation will be initiated).
+    Description: AWS Account ID of the management/root account (account from which AWS Systems Manager Automation will be initiated).
     MaxLength: 12
     MinLength: 12
-  Regions:
+  TargetRegions:
     Type: CommaDelimitedList
-    Description: AWS Regions that is in scope for this solution (for eg. ap-southeast-2, us-east-1 if you have 2 regions).
+    Description: AWS Regions that is in scope for this solution in a comma-separated format (for eg. ap-southeast-2, us-east-1).
     Default: ap-southeast-2,us-east-1
+  TargetOUs:
+    Description: AWS Organization Unit (OU) IDs which are in scope for this solution in a comma-separated format (for eg. ou-abc1-abc12ab1,ou-def2-def12de1).
+    Type: CommaDelimitedList
+    Default: ou-abc1-abc12ab1
 Resources:   
   AdministrationIAMRole:
     Type: 'AWS::IAM::Role'
@@ -49,7 +51,7 @@ Resources:
           - Effect: Allow
             Principal:
               AWS:
-                - !Sub "arn:aws:iam::${MasterAccountId}:root"
+                - !Sub "arn:aws:iam::${ManagementAccountId}:root"
             Action:
               - sts:AssumeRole
       Path: /
@@ -65,8 +67,142 @@ Resources:
                   - 'ssm:CreateDocument'
                   - 'ssm:DescribeDocument'
                   - 'ssm:DeleteDocument'
+                  - 'ssm:ListTagsForResource'
+                  - 'iam:CreateRole'
+                  - 'iam:GetRole'
+                  - 'iam:GetRolePolicy'
+                  - 'iam:PassRole'
+                  - 'iam:DetachRolePolicy'
+                  - 'iam:DeleteRolePolicy'
+                  - 'iam:DeleteRole'
+                  - 'iam:CreateRole'
+                  - 'iam:AttachRolePolicy'
+                  - 'iam:PutRolePolicy'
+                  - 'lambda:GetFunction'
+                  - 'lambda:CreateFunction'
+                  - 'lambda:DeleteFunction'
+                  - 'lambda:GetFunctionConfiguration'
+                  - 'lambda:InvokeFunction'
+                  - 'lambda:AddPermission'
+                  - 'lambda:RemovePermission'
+                  - 'events:DescribeRule'
+                  - 'events:PutRule'
+                  - 'events:PutTargets'
+                  - 'events:RemoveTargets'
+                  - 'events:DeleteRule'
                 Resource: '*'
       Description: Configure the SQLServerLTS-CloudFormation-StackSetExecutionRole to enable use of CloudFormation Stacksets
+  SQLServerLTSSystemsManagerAutomationExecutionRoleStackSet:
+    Type: AWS::CloudFormation::StackSet
+    Properties:
+      AutoDeployment:
+        Enabled: true
+        RetainStacksOnAccountRemoval: false
+      StackSetName: SQLServerLTSSystemsManagerAutomationExecutionRole
+      Parameters:
+        - 
+          ParameterKey: ManagementAccountId
+          ParameterValue: !Ref ManagementAccountId
+      PermissionModel: SERVICE_MANAGED
+      Capabilities: 
+        - CAPABILITY_IAM
+        - CAPABILITY_NAMED_IAM
+      StackInstancesGroup:
+        - Regions: 
+          - us-east-1
+          DeploymentTargets:
+            OrganizationalUnitIds: !Ref TargetOUs
+      TemplateBody: |
+        Parameters:
+          ManagementAccountId:
+            Description: (Required) Management/Root AWS Account ID from where this solution will be executed. If you are using AWS Organizations then you need to specify the root/management account.
+            Type: String
+            Default: '123456789012'
+        Resources:
+          SQLServerLTSSystemsManagerAutomationExecutionRole:
+            Type: 'AWS::IAM::Role'
+            Properties:
+              RoleName: SQLServerLTS-SystemsManager-AutomationExecutionRole
+              AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                  - Effect: Allow
+                    Principal:
+                      AWS: !Ref ManagementAccountId
+                    Action:
+                      - 'sts:AssumeRole'
+                  - Effect: Allow
+                    Principal:
+                      Service: ssm.amazonaws.com
+                    Action:
+                      - 'sts:AssumeRole'
+                  - Effect: Allow
+                    Principal:
+                      Service: license-manager.amazonaws.com
+                    Action: 'sts:AssumeRole'
+                  - Effect: Allow
+                    Principal:
+                      Service: license-manager.member-account.amazonaws.com
+                    Action: 'sts:AssumeRole'
+              ManagedPolicyArns:
+                - 'arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole'
+              Path: /
+              Policies:
+                - PolicyName: ExecutionPolicy
+                  PolicyDocument:
+                    Version: 2012-10-17
+                    Statement:
+                      - Effect: Allow
+                        Action:
+                          - 'resource-groups:ListGroupResources'
+                          - 'tag:GetResources'
+                          - 'license-manager:UpdateLicenseSpecificationsForResource'
+                          - 'license-manager:GetLicenseConfiguration'
+                          - 'ssm:DeleteInventory'
+                          - 'ssm:PutInventory'
+                          - 'ssm:GetInventorySchema'
+                          - 'ssm:StartAutomationExecution'
+                          - 'ssm:ListCommands'
+                          - 'ssm:DescribeInstanceInformation'
+                          - 'ssm:ListCommandInvocations'
+                          - 'ssm:UpdateInstanceAssociationStatus'
+                          - 'ec2:DescribeInstances'
+                          - 'ec2:DescribeTags'
+                          - 'license-manager:ListLicenseSpecificationsForResource'
+                          - 'ec2messages:GetEndpoint'
+                          - 'ec2messages:FailMessage'
+                          - 'ec2messages:AcknowledgeMessage'
+                          - 'ec2messages:SendReply'
+                          - 'ec2messages:GetMessages'
+                          - 'ssm:ListDocuments'
+                        Resource: '*'
+                      - Effect: Allow
+                        Action:
+                          - 'iam:PassRole'
+                        Resource: !Sub >-
+                          arn:${AWS::Partition}:iam::${AWS::AccountId}:role/SQLServerLTS-SystemsManager-AutomationExecutionRole
+                      - Effect: Allow
+                        Action:
+                          - 'license-manager:UpdateLicenseSpecificationsForResource'
+                          - 'license-manager:GetLicenseConfiguration'
+                        Resource:
+                          - '*'
+                      - Effect: Allow
+                        Action:
+                          - 'ssm:SendCommand'
+                        Resource:
+                          - 'arn:aws:ec2:*:*:instance/*'
+                          - >-
+                            arn:aws:ssm:*:*:automation-definition/Secondary-SQLServerLicenseTrackingSolution-Document:VersionId}
+                          - 'arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document'
+                          - 'arn:aws:ssm:*:*:document/AWS-RunPowerShellScript'
+                      - Effect: Allow
+                        Action:
+                          - 'ssm:DescribeDocument'
+                          - 'ssm:ModifyDocumentPermission'
+                          - 'ssm:DescribeDocumentPermission'
+                        Resource: >-
+                          arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document
   SecondaryAutomationDocumentStackSet:
     Type: AWS::CloudFormation::StackSet
     Properties:
@@ -74,11 +210,14 @@ Resources:
       ExecutionRoleName: !Ref ExecutionIAMRole
       StackSetName: SecondaryAutomationDocumentStackSet
       PermissionModel: SELF_MANAGED
+      Capabilities: 
+        - CAPABILITY_IAM
+        - CAPABILITY_NAMED_IAM
       StackInstancesGroup:
-        - Regions: !Ref Regions
+        - Regions: !Ref TargetRegions
           DeploymentTargets:
             Accounts:
-              - !Ref MasterAccountId
+              - !Ref ManagementAccountId
       TemplateBody: |
         Resources:
           SecondarySSMDocument:
@@ -282,3 +421,122 @@ Resources:
                     } ]
                   }
               DocumentType: "Automation"
+          LambdaFunctionExecutionRole:
+            Type: AWS::IAM::Role
+            Properties:
+              AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                  - Effect: Allow
+                    Principal:
+                      Service: [lambda.amazonaws.com]
+                    Action: ['sts:AssumeRole']
+              ManagedPolicyArns:
+                - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+              Path: /
+              Policies:
+                - PolicyName: SQLServerLTS-SecondaryDocumentPermissionManagementLambdaPolicy
+                  PolicyDocument:
+                    Version: 2012-10-17
+                    Statement:
+                      - Effect: Allow
+                        Action: ['ssm:ListDocuments','organizations:ListAccounts']
+                        Resource: '*'
+                      - Effect: Allow
+                        Action: ['ssm:DescribeDocument','ssm:ModifyDocumentPermission','ssm:DescribeDocumentPermission']
+                        Resource: 'arn:aws:ssm:*:*:document/Secondary-SQLServerLicenseTrackingSolution-Document'
+          LambdaFunction:
+            Type: "AWS::Lambda::Function"
+            Properties:
+              Description: "Lambda function to maintain permissions for Secondary-SQLServerLicenseTrackingSolution-Document with all accounts in the Organization (AWS Organization)"
+              FunctionName: "Modify-SQLServerSecondaryDocument-Permission"
+              Handler: "index.lambda_handler"
+              Code: 
+                ZipFile: |
+                  import sys
+                  import boto3
+                  import json
+                  import botocore
+                  import cfnresponse
+
+                  def lambda_handler(events, context):
+                    organization = boto3.client('organizations')
+                    ssm = boto3.client('ssm')
+                    target = ''
+                    accountList = []
+
+                    accountListResponse = organization.list_accounts()
+                    
+                    if accountListResponse['Accounts']:
+                      for accountId in accountListResponse['Accounts']:
+                        accountList.append(accountId['Id'])
+                    else:
+                      print('No account IDs found in this account')
+                        
+                    #Get current document permissions
+                    oldDocumentPermissionResponse = ssm.describe_document_permission(
+                      Name='Secondary-SQLServerLicenseTrackingSolution-Document',
+                      PermissionType='Share'
+                    )
+                    
+                    #Remove old document permissions
+                    if oldDocumentPermissionResponse['AccountIds']:
+                      removeOldDocumentPermissionResponse = ssm.modify_document_permission(
+                        Name='Secondary-SQLServerLicenseTrackingSolution-Document',
+                        PermissionType='Share',
+                        AccountIdsToRemove=oldDocumentPermissionResponse['AccountIds']
+                      )
+                    
+                    #Modify the document permissions with the new list of accounts from the specified OUs
+                    response = ssm.modify_document_permission(
+                      Name='Secondary-SQLServerLicenseTrackingSolution-Document',
+                      PermissionType='Share',
+                      AccountIdsToAdd=accountList
+                    )
+                    
+                    if response['ResponseMetadata']:
+                      if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                        print(f"Successfully modified Secondary-SQLServerLicenseTrackingSolution-Document permissions to be shared with these accounts: "+','.join(accountList))
+                        responseValue = response['ResponseMetadata']
+                        responseData = {}
+                        responseData['Data'] = responseValue
+                        cfnresponse.send(events, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
+                      else:
+                        responseValue = "Error"
+                        responseData = {}
+                        responseData['Error'] = responseValue
+                        cfnresponse.send(events, context, cfnresponse.FAILED, responseData, "CustomResourcePhysicalID")
+                        raise Exception(f"There was a problem modifying the permissions of Secondary-SQLServerLicenseTrackingSolution-Document, check the logs for more details")
+                    else:
+                      raise Exception(f"There seems to be a problem, check the logs for more details")
+              MemorySize: 128
+              Role: !GetAtt LambdaFunctionExecutionRole.Arn
+              Runtime: "python3.8"
+              Timeout: 3
+              TracingConfig: 
+                Mode: "PassThrough"
+          ScheduledRule:
+            Type: "AWS::Events::Rule"
+            Properties:
+              Name: "Modify-SQLServerSecondaryDocument-Permission-Rule"
+              Description: "Trigger for Modify-SQLServerSecondaryDocument-Permission function"
+              ScheduleExpression: "rate(30 days)"
+              State: "ENABLED"
+              Targets: 
+              - 
+                Arn: !GetAtt LambdaFunction.Arn
+                Id: !Select [2, !Split ["/", !Sub "${AWS::StackId}"]] 
+              EventBusName: "default"
+          PermissionForEventsToInvokeLambda: 
+            Type: AWS::Lambda::Permission
+            Properties: 
+              FunctionName: !Ref "LambdaFunction"
+              Action: "lambda:InvokeFunction"
+              Principal: "events.amazonaws.com"
+              SourceArn: !GetAtt ScheduledRule.Arn
+          InitialLambdaInvocation:
+            Type: AWS::CloudFormation::CustomResource
+            DependsOn: LambdaFunction
+            Version: "1.0"
+            Properties:
+              ServiceToken: !GetAtt LambdaFunction.Arn
