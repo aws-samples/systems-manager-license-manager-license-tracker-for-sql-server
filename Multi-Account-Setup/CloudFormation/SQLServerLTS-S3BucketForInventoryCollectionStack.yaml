@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'CloudFormation stackset template to deploy S3 bucket and policy for Resource Data Sync to collect inventory data for SQLServer License Tracking Solution'
+Parameters:
+  BucketName:
+    Description: Name of the S3 bucket where the aggregated data will be stored.
+    Type: String
+    AllowedPattern: '^[a-z]+(-[a-z]+)*$'
+    ConstraintDescription: Provide a valid name for S3 bucket
+  BucketRegion:
+    Description: AWS Region where the S3 bucket will be created in for eg. ap-southeast-2.
+    Type: String
+  OrganizationId:
+    Description: AWS Organization ID.
+    Type: String
+    AllowedPattern: '^[o]+(-[a-z0-9]+)*$'
+    ConstraintDescription: Provide a valid Organization ID (for eg. o-abc5drtefg)
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+        - 
+          Sid: "SSMBucketPermissionsCheck"
+          Effect: "Allow"
+          Principal: 
+            Service: "ssm.amazonaws.com"
+          Action: "s3:GetBucketAcl"
+          Resource: !Sub "arn:aws:s3:::${S3Bucket}"
+        - 
+          Sid: "SSMBucketDelivery"
+          Effect: "Allow"
+          Principal: 
+            Service: "ssm.amazonaws.com"
+          Action: "s3:PutObject"
+          Resource: !Sub "arn:aws:s3:::${S3Bucket}/*/accountid=*/*"
+          Condition: 
+            StringEquals: 
+              "s3:RequestObjectTag/OrgId": 
+                !Sub 
+                  - "${OrgID}"
+                  - { OrgID: !Ref OrganizationId}
+              "s3:x-amz-acl": "bucket-owner-full-control"
+        - 
+          Sid: "SSMBucketDeliveryTagging"
+          Effect: "Allow"
+          Principal: 
+            Service: "ssm.amazonaws.com"
+          Action: "s3:PutObjectTagging"
+          Resource: !Sub "arn:aws:s3:::${S3Bucket}/*/accountid=*/*"
+    DependsOn: S3Bucket    
