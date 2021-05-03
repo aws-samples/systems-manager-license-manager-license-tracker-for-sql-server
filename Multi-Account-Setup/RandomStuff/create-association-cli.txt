@@ -20,3 +20,13 @@ aws ssm create-association \
     --parameters '{"AutomationAssumeRole":["arn:aws:iam::784315950497:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"SQLServerSTDLicenseConfiguration":["arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-a0bc5a2cbe06b2185a085e29bab245e3"],"SQLServerDEVLicenseConfiguration":["arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-78bc5a2c19798054db0a526f34bedb70"]}' \
     --no-apply-only-at-cron-interval --profile master \
     --target-locations '[{"Accounts": ["ou-lkal-3q660cjl","ou-lkal-dnbq6y41"],"Regions": ["ap-southeast-2","us-east-1"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
+
+
+aws ssm create-association \
+    --association-name "SQLServerLicenseTrackingSolution-Association" \
+    --name "Primary-SQLServerLicenseTrackingSolution-Document" \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"SQLServerEELicenseConfiguration":["SQLServerEELicenseConfiguration-ARN"],"SQLServerSTDLicenseConfiguration":["SQLServerSTDLicenseConfiguration-ARN"],"SQLServerWEBLicenseConfiguration":["SQLServerWEBLicenseConfiguration-ARN"],"SQLServerEXPLicenseConfiguration":["SQLServerEXPLicenseConfiguration-ARN"],"SQLServerDEVLicenseConfiguration":["SQLServerDEVLicenseConfiguration-ARN"]}' \
+    --no-apply-only-at-cron-interval \
+    --target-locations '[{"Accounts": ["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","OU3-ID"],"Regions": ["REGION-1 like us-east-1","REGION-2"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
+
+aws ssm create-resource-data-sync --sync-name SQLServerLTS-ResourceDataSync --s3-destination "BucketName=bhatprav-sqllts-test-bucket,SyncFormat=JsonSerDe,Region=ap-southeast-2,DestinationDataSharing={DestinationDataSharingType=Organization}" --region ap-southeast-2 --profile demo1
