@@ -260,7 +260,7 @@ Resources:
                       "description" : "AWS Account ID",
                       "default" : "{{global:ACCOUNT_ID}}"
                     },
-                    "SQLServerEELicenseConfiguration" : {
+                    "SQLServerENTLicenseConfiguration" : {
                       "type" : "String",
                       "description" : "License Configuration ARN for SQL Enterprise Edition or leave it as -"
                     },
@@ -298,7 +298,7 @@ Resources:
                           "instanceId" : "{{ InstanceId }}",
                           "accountId" : "{{ AccountId }}",
                           "region" : "{{ Region }}",
-                          "sqlServerEELicenseConfig" : "{{ SQLServerEELicenseConfiguration }}",
+                          "sqlServerEELicenseConfig" : "{{ SQLServerENTLicenseConfiguration }}",
                           "sqlServerSTDLicenseConfig" : "{{ SQLServerSTDLicenseConfiguration }}",
                           "sqlServerEXPLicenseConfig" : "{{ SQLServerEXPLicenseConfiguration }}",
                           "sqlServerWEBLicenseConfig" : "{{ SQLServerWEBLicenseConfiguration }}",
@@ -387,7 +387,7 @@ Resources:
                           "region" : "{{ Region }}",
                           "instanceId" : "{{ InstanceId }}",
                           "sqlInfo" : "{{isBYOLSQLServerInstalled.result}}",
-                          "sqlServerEELicenseConfig" : "{{ SQLServerEELicenseConfiguration }}",
+                          "sqlServerEELicenseConfig" : "{{ SQLServerENTLicenseConfiguration }}",
                           "sqlServerSTDLicenseConfig" : "{{ SQLServerSTDLicenseConfiguration }}",
                           "sqlServerEXPLicenseConfig" : "{{ SQLServerEXPLicenseConfiguration }}",
                           "sqlServerWEBLicenseConfig" : "{{ SQLServerWEBLicenseConfiguration }}",

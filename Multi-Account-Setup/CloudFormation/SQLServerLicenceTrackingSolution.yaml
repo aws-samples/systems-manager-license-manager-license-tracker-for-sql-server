@@ -14,7 +14,7 @@ Metadata:
         Label: 
           default: 'Automation Documents'
         Parameters: 
-          - SQLServerEELicenseConfiguration
+          - SQLServerENTLicenseConfiguration
           - SQLServerSTDLicenseConfiguration
           - SQLServerWEBLicenseConfiguration
           - SQLServerEXPLicenseConfiguration
@@ -25,7 +25,7 @@ Metadata:
           - TargetRegions
           - TargetOUs
     ParameterLabels:
-      SQLServerEELicenseConfiguration:
+      SQLServerENTLicenseConfiguration:
         default: 'Enterprise Edition'
       SQLServerSTDLicenseConfiguration:
         default: 'Standard Edition'
@@ -74,7 +74,7 @@ Resources:
       Parameters: 
         TagKey : !Ref TagKey
         TagValue : !Ref TagValue
-        SQLServerEELicenseConfiguration: !Ref SQLServerEELicenseConfiguration
+        SQLServerENTLicenseConfiguration: !Ref SQLServerENTLicenseConfiguration
         SQLServerSTDLicenseConfiguration: !Ref SQLServerSTDLicenseConfiguration
         SQLServerWEBLicenseConfiguration: !Ref SQLServerWEBLicenseConfiguration
         SQLServerEXPLicenseConfiguration: !Ref SQLServerEXPLicenseConfiguration
@@ -106,7 +106,7 @@ Parameters:
     Description: (Required) Management/Root AWS Account ID from where this solution will be executed. If you are using AWS Organizations then you need to specify the root/management account.
     Type: String
     Default: '123456789012'
-  SQLServerEELicenseConfiguration:
+  SQLServerENTLicenseConfiguration:
     Description: License Configuration ARN for SQL Server Enterprise Edition
     Type: String
     Default: '-'
