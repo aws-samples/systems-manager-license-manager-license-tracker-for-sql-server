@@ -59,7 +59,7 @@ Resources:
         BucketName: !Ref BucketName
         BucketRegion: !Ref BucketRegion
         OrganizationId: !Ref OrganizationId
-      TemplateURL: https://s3.amazonaws.com/sql-lts-cfn-templates/SQLServerLTS-S3BucketForInventoryCollectionStack.yaml
+      TemplateURL: https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/SQLServerLTS-S3BucketForInventoryCollectionStack.yaml
   SecondaryAutomationDocumentStack:
     Type: AWS::CloudFormation::Stack
     Properties: 
@@ -67,7 +67,7 @@ Resources:
         ManagementAccountId: !Ref ManagementAccountId
         TargetOUs: !Ref TargetOUs
         TargetRegions: !Ref TargetRegions
-      TemplateURL: https://s3.amazonaws.com/sql-lts-cfn-templates/SQLServerLTS-SecondaryAutomationDocument.yaml
+      TemplateURL: https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/SQLServerLTS-SecondaryAutomationDocument.yaml
   PrimaryAutomationDocumentStack:
     Type: AWS::CloudFormation::Stack
     Properties: 
@@ -79,7 +79,7 @@ Resources:
         SQLServerWEBLicenseConfiguration: !Ref SQLServerWEBLicenseConfiguration
         SQLServerEXPLicenseConfiguration: !Ref SQLServerEXPLicenseConfiguration
         SQLServerDEVLicenseConfiguration: !Ref SQLServerDEVLicenseConfiguration
-      TemplateURL: https://s3.amazonaws.com/sql-lts-cfn-templates/SQLServerLTS-PrimaryAutomationDocument.yaml
+      TemplateURL: https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/SQLServerLTS-PrimaryAutomationDocument.yaml
 Parameters:
   OrganizationId:
     Description: AWS Organization ID.

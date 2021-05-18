@@ -25,8 +25,24 @@ aws ssm create-association \
 aws ssm create-association \
     --association-name "SQLServerLicenseTrackingSolution-Association" \
     --name "Primary-SQLServerLicenseTrackingSolution-Document" \
-    --parameters '{"AutomationAssumeRole":["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"SQLServerEELicenseConfiguration":["SQLServerEELicenseConfiguration-ARN"],"SQLServerSTDLicenseConfiguration":["SQLServerSTDLicenseConfiguration-ARN"],"SQLServerWEBLicenseConfiguration":["SQLServerWEBLicenseConfiguration-ARN"],"SQLServerEXPLicenseConfiguration":["SQLServerEXPLicenseConfiguration-ARN"],"SQLServerDEVLicenseConfiguration":["SQLServerDEVLicenseConfiguration-ARN"]}' \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::784315950497:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"SQLServerSTDLicenseConfiguration":["arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-a0bc5a2cbe06b2185a085e29bab245e3"],"SQLServerDEVLicenseConfiguration":["arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-78bc5a2c19798054db0a526f34bedb70"],"SQLServerWEBLicenseConfiguration":["arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-94bcbeaf1549d73ba9943451fccb1ff1"],"SQLServerENTLicenseConfiguration":["arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-d6bc5a2c9cb29c22082cb6812cd056e7"],"SQLServerEXPLicenseConfiguration":["arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-06bc5a2cd7d3a93d1fa9104f0f4f724f"]}' \
+    --target-locations '[{"Accounts": ["ou-lkal-3q660cjl","ou-lkal-dnbq6y41"],"Regions": ["ap-southeast-2","us-east-1"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]' \
+    --no-apply-only-at-cron-interval --profile master
+
+
+aws ssm create-association \
+    --association-name "SQLServerLicenseTrackingSolution-Association" \
+    --name "Primary-SQLServerLicenseTrackingSolution-Document" \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"SQLServerENTLicenseConfiguration":["SQLServerENTLicenseConfiguration-ARN"],"SQLServerSTDLicenseConfiguration":["SQLServerSTDLicenseConfiguration-ARN"],"SQLServerWEBLicenseConfiguration":["SQLServerWEBLicenseConfiguration-ARN"],"SQLServerEXPLicenseConfiguration":["SQLServerEXPLicenseConfiguration-ARN"],"SQLServerDEVLicenseConfiguration":["SQLServerDEVLicenseConfiguration-ARN"]}' \
     --no-apply-only-at-cron-interval \
     --target-locations '[{"Accounts": ["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","OU3-ID"],"Regions": ["REGION-1 like us-east-1","REGION-2"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
 
 aws ssm create-resource-data-sync --sync-name SQLServerLTS-ResourceDataSync --s3-destination "BucketName=bhatprav-sqllts-test-bucket,SyncFormat=JsonSerDe,Region=ap-southeast-2,DestinationDataSharing={DestinationDataSharingType=Organization}" --region ap-southeast-2 --profile demo1
+
+aws cloudformation deploy --template-file SQLServerLicenceTrackingSolution.yaml --stack-name sql-lts-partnercast-demo --parameter-overrides BucketName=bhatprav-sqllts-test-bucket BucketRegion=ap-southeast-2 TargetOUs=ou-lkal-dnbq6y41,ou-lkal-3q660cjl TargetRegions=ap-southeast-2,us-east-1 OrganizationId=o-se74hgblvn \
+    SQLServerSTDLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-a0bc5a2cbe06b2185a085e29bab245e3 \
+    SQLServerDEVLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-78bc5a2c19798054db0a526f34bedb70 \
+    SQLServerWEBLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-94bcbeaf1549d73ba9943451fccb1ff1 \
+    SQLServerEXPLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-06bc5a2cd7d3a93d1fa9104f0f4f724f \
+    SQLServerENTLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-d6bc5a2c9cb29c22082cb6812cd056e7 \
+    ManagementAccountId=784315950497 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --profile master
