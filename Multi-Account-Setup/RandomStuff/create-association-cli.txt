@@ -46,3 +46,6 @@ aws cloudformation deploy --template-file SQLServerLicenceTrackingSolution.yaml 
     SQLServerEXPLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-06bc5a2cd7d3a93d1fa9104f0f4f724f \
     SQLServerENTLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-d6bc5a2c9cb29c22082cb6812cd056e7 \
     ManagementAccountId=784315950497 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --profile master
+
+To delete Inventory schema -
+aws ssm delete-inventory --type-name "Custom:SQLServer" --schema-delete-option "DeleteSchema"

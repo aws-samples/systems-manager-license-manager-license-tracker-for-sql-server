@@ -139,9 +139,9 @@ Resources:
               "inputs" : {
                 "Runtime" : "python3.7",
                 "Handler" : "script_handler",
-                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\nimport time\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  \n  get_inventory_response = client.get_inventory_schema(\n    TypeName='Custom:SQLServer'\n  )\n  \n  if get_inventory_response['Schemas']:\n    delete_inventory_response = client.delete_inventory(\n      TypeName='Custom:SQLServer',\n      SchemaDeleteOption='DeleteSchema'\n    )\n    \n    deletion_id = delete_inventory_response['DeletionId']\n    print(deletion_id)\n   \n    wait_loop = True\n    while wait_loop == True:\n      describe_inventory_deletions_response = client.describe_inventory_deletions(\n        DeletionId=deletion_id\n      )\n      if describe_inventory_deletions_response['InventoryDeletions']:\n        if describe_inventory_deletions_response['InventoryDeletions'][0]['LastStatus'] == \"Complete\":\n          status = \"Custom:SQLServer schema has been deleted successfuly. DeletionID: \"+deletion_id\n          wait_loop = False\n          break\n        else:\n          time.sleep(60)\n\n  else:\n    status = \"Custom:SQLServer type doesn't exist in the Inventory so continuing to the next step.\"\n    \n  return {'message': status}\n"
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\nimport time\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  \n  get_inventory_response = client.get_inventory_schema(\n    TypeName='Custom:SQLServer'\n  )\n  \n  if get_inventory_response['Schemas']:\n    delete_inventory_response = client.delete_inventory(\n      TypeName='Custom:SQLServer',\n      SchemaDeleteOption='DeleteSchema'\n    )\n    \n    deletion_id = delete_inventory_response['DeletionId']\n    print(deletion_id)\n   \n    wait_loop = True\n    while wait_loop == True:\n      describe_inventory_deletions_response = client.describe_inventory_deletions(\n        DeletionId=deletion_id\n      )\n      if describe_inventory_deletions_response['InventoryDeletions']:\n        if describe_inventory_deletions_response['InventoryDeletions'][0]['LastStatus'] == \"Complete\":\n          status = \"Custom:SQLServer schema has been deleted successfuly. DeletionID: \"+deletion_id\n          wait_loop = False\n          break\n        else:\n          time.sleep(30)\n\n  else:\n    status = \"Custom:SQLServer type doesn't exist in the Inventory so continuing to the next step.\"\n    \n  return {'message': status}\n"
               },
-              "nextStep" : "invokeSecondarySQLServerLicenseTrackingSolutionAutomation",
+              "nextStep" : "getLicenseConfigurations",
               "outputs" : [ {
                 "Name" : "result",
                 "Selector" : "$.Payload.message",
@@ -150,21 +150,36 @@ Resources:
               "onFailure": "Abort",
               "isCritical" : true
             }, {
+              "name": "getLicenseConfigurations",
+              "action": "aws:executeScript",
+              "outputs": [
+                {
+                  "Name": "currentLicenseList",
+                  "Selector": "$.Payload.output",
+                  "Type": "StringMap"
+                }
+              ],
+              "inputs": {
+                "Runtime": "python3.7",
+                "Handler": "script_handler",
+                "Script": "import sys\nimport boto3\nimport json\nimport botocore\nimport time\n\ndef script_handler(events, context):\n  client = boto3.client('license-manager')\n  currentLicenseList = {}\n  \n  sqlVersionList = ['SQLServerEXPLicenseConfiguration','SQLServerENTLicenseConfiguration','SQLServerSTDLicenseConfiguration','SQLServerDEVLicenseConfiguration','SQLServerWEBLicenseConfiguration']\n  \n  listResponse = client.list_license_configurations()\n    \n  if listResponse['LicenseConfigurations']:\n    for config in listResponse['LicenseConfigurations']:\n      if config['Name']:\n        currentLicenseList[config['Name']] = config['LicenseConfigurationArn']   \n  \n  \n  for version in sqlVersionList:\n    if not version in currentLicenseList.keys():\n      print('License configuration for ' + version + ' does not exist in the management account. You will need to create a license configuration in the management account and share it with this account.')\n        \n  return {'output': currentLicenseList}"
+              },
+              "isEnd": false,
+              "onFailure": "Abort",
+              "isCritical" : true,
+              "nextStep": "invokeSecondarySQLServerLicenseTrackingSolutionAutomation"
+            }, {
               "name" : "invokeSecondarySQLServerLicenseTrackingSolutionAutomation",
               "description" : "This step invokes the SecondarySQLServerLicenseTrackingSolutionDocument automation",
               "action" : "aws:executeScript",
               "inputs" : {
                 "Runtime" : "python3.7",
                 "Handler" : "script_handler",
-                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  tagKey = events['tagKey']\n  tagValue = events['tagValue']\n  sqlServerENTLicenseConfig = events['sqlServerENTLicenseConfig']\n  sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']\n  sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']\n  sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']\n  sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']\n  automationAssumeRole = events['automationAssumeRole']\n  \n  documentName = events['documentName']\n  \n  response = client.start_automation_execution(\n    DocumentName=documentName,\n    Parameters={\n        'InstanceId': [\n            '*'\n        ],\n        'TagKey': [\n            tagKey\n        ],\n        'TagValue': [\n            tagValue\n        ],\n        'SQLServerENTLicenseConfiguration': [\n            sqlServerENTLicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': 'tag:'+tagKey,\n            'Values': [\n                tagValue\n            ]\n        }\n    ]\n      )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn\\'t be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
+                "Script" : "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n  currentLicenseList = events['currentLicenseList']\n  \n  tagKey = events['tagKey']\n  tagValue = events['tagValue']\n  sqlServerENTLicenseConfig = currentLicenseList.get('SQLServerENTLicenseConfiguration')\n  sqlServerSTDLicenseConfig = currentLicenseList.get('SQLServerSTDLicenseConfiguration')\n  sqlServerEXPLicenseConfig = currentLicenseList.get('SQLServerEXPLicenseConfiguration')\n  sqlServerWEBLicenseConfig = currentLicenseList.get('SQLServerWEBLicenseConfiguration')\n  sqlServerDEVLicenseConfig = currentLicenseList.get('SQLServerDEVLicenseConfiguration')\n  automationAssumeRole = events['automationAssumeRole']\n  \n  documentName = events['documentName']\n  \n  response = client.start_automation_execution(\n    DocumentName=documentName,\n    Parameters={\n        'InstanceId': [\n            '*'\n        ],\n        'TagKey': [\n            tagKey\n        ],\n        'TagValue': [\n            tagValue\n        ],\n        'SQLServerENTLicenseConfiguration': [\n            sqlServerENTLicenseConfig\n        ],\n        'SQLServerSTDLicenseConfiguration': [\n            sqlServerSTDLicenseConfig\n        ],\n        'SQLServerEXPLicenseConfiguration': [\n            sqlServerEXPLicenseConfig\n        ],\n        'SQLServerWEBLicenseConfiguration': [\n            sqlServerWEBLicenseConfig\n        ],\n        'SQLServerDEVLicenseConfiguration': [\n            sqlServerDEVLicenseConfig\n        ],\n        'AutomationAssumeRole': [\n            automationAssumeRole\n        ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n        {\n            'Key': 'tag:'+tagKey,\n            'Values': [\n                tagValue\n            ]\n        }\n    ]\n      )\n  \n  if response[\"AutomationExecutionId\"]:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = \"Secondary-SQLServerLicenseTrackingSolution-Document was not invoked\"\n    raise Exception(f\"It appears that this step couldn\\'t be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
                 "InputPayload" : {
                   "tagKey" : "{{ TagKey }}",
                   "tagValue" : "{{ TagValue }}",
-                  "sqlServerENTLicenseConfig" : "{{ SQLServerENTLicenseConfiguration }}",
-                  "sqlServerSTDLicenseConfig" : "{{ SQLServerSTDLicenseConfiguration }}",
-                  "sqlServerEXPLicenseConfig" : "{{ SQLServerEXPLicenseConfiguration }}",
-                  "sqlServerWEBLicenseConfig" : "{{ SQLServerWEBLicenseConfiguration }}",
-                  "sqlServerDEVLicenseConfig" : "{{ SQLServerDEVLicenseConfiguration }}",
+                  "currentLicenseList" : "{{getLicenseConfigurations.currentLicenseList}}",
                   "automationAssumeRole" : "{{ AutomationAssumeRole }}",
                   "documentName" : "{{ DocumentName }}"
                 }
@@ -203,6 +218,7 @@ Resources:
                   - 'ssm:CreateDocument'
                   - 'ssm:StartAutomationExecution'
                   - 'tag:GetResources'
+                  - 'license-manager:ListLicenseConfigurations'
                 Resource: '*'
               - Effect: Allow
                 Action:

@@ -89,7 +89,7 @@ mainSteps:
                   wait_loop = False
                   break
                 else:
-                  time.sleep(60)
+                  time.sleep(30)
         
           else:
             status = "Custom:SQLServer type doesn't exist in the Inventory so continuing to the next step."
