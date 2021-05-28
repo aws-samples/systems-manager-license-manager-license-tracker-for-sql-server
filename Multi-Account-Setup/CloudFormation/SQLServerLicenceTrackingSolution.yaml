@@ -14,27 +14,12 @@ Metadata:
         Label: 
           default: 'Automation Documents'
         Parameters: 
-          - SQLServerENTLicenseConfiguration
-          - SQLServerSTDLicenseConfiguration
-          - SQLServerWEBLicenseConfiguration
-          - SQLServerEXPLicenseConfiguration
-          - SQLServerDEVLicenseConfiguration
           - TagKey
           - TagValue
           - ManagementAccountId
           - TargetRegions
           - TargetOUs
     ParameterLabels:
-      SQLServerENTLicenseConfiguration:
-        default: 'Enterprise Edition'
-      SQLServerSTDLicenseConfiguration:
-        default: 'Standard Edition'
-      SQLServerWEBLicenseConfiguration:
-        default: 'Web Edition'
-      SQLServerEXPLicenseConfiguration:
-        default: 'Express Edition'
-      SQLServerDEVLicenseConfiguration:
-        default: 'Developer Edition'
       TagKey:
         default: 'TagKey'
       TagValue:
@@ -74,11 +59,6 @@ Resources:
       Parameters: 
         TagKey : !Ref TagKey
         TagValue : !Ref TagValue
-        SQLServerENTLicenseConfiguration: !Ref SQLServerENTLicenseConfiguration
-        SQLServerSTDLicenseConfiguration: !Ref SQLServerSTDLicenseConfiguration
-        SQLServerWEBLicenseConfiguration: !Ref SQLServerWEBLicenseConfiguration
-        SQLServerEXPLicenseConfiguration: !Ref SQLServerEXPLicenseConfiguration
-        SQLServerDEVLicenseConfiguration: !Ref SQLServerDEVLicenseConfiguration
       TemplateURL: https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/SQLServerLTS-PrimaryAutomationDocument.yaml
 Parameters:
   OrganizationId:
@@ -106,36 +86,6 @@ Parameters:
     Description: (Required) Management/Root AWS Account ID from where this solution will be executed. If you are using AWS Organizations then you need to specify the root/management account.
     Type: String
     Default: '123456789012'
-  SQLServerENTLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Enterprise Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Enterprise Edition or leave it as -
-  SQLServerSTDLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Standard Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Standard Edition or leave it as -
-  SQLServerWEBLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Web Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Web Edition or leave it as -
-  SQLServerEXPLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Express Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Express Edition or leave it as -
-  SQLServerDEVLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Developer Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Developer Edition or leave it as -
   BucketName:
     Description: Name for the S3 bucket that will be used to aggregate the Inventory data.
     Type: String

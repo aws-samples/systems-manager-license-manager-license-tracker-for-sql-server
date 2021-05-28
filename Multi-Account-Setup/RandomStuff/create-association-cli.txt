@@ -47,5 +47,23 @@ aws cloudformation deploy --template-file SQLServerLicenceTrackingSolution.yaml 
     SQLServerENTLicenseConfiguration=arn:aws:license-manager:ap-southeast-2:784315950497:license-configuration:lic-d6bc5a2c9cb29c22082cb6812cd056e7 \
     ManagementAccountId=784315950497 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --profile master
 
+aws cloudformation deploy --template-file SQLServerLicenceTrackingSolution.yaml --stack-name sql-lts-demo --parameter-overrides BucketName=bhatprav-sqllts-test-bucket BucketRegion=ap-southeast-2 \
+    TargetOUs=ou-lkal-dnbq6y41,ou-lkal-3q660cjl TargetRegions=ap-southeast-2,us-east-1 OrganizationId=o-se74hgblvn \
+    ManagementAccountId=784315950497 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --profile master
+
+aws ssm create-association \
+    --association-name "SQLServerLicenseTrackingSolution-Association" \
+    --name "Primary-SQLServerLicenseTrackingSolution-Document" \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"]}' \
+    --no-apply-only-at-cron-interval \
+    --target-locations '[{"Accounts": ["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","OU3-ID"],"Regions": ["REGION-1 like us-east-1","REGION-2"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
+
+aws ssm create-association \
+    --association-name "SQLServerLicenseTrackingSolution-Association" \
+    --name "Primary-SQLServerLicenseTrackingSolution-Document" \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::784315950497:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"]}' \
+    --target-locations '[{"Accounts": ["ou-lkal-3q660cjl","ou-lkal-dnbq6y41"],"Regions": ["ap-southeast-2","us-east-1"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]' \
+    --no-apply-only-at-cron-interval --profile master
+
 To delete Inventory schema -
 aws ssm delete-inventory --type-name "Custom:SQLServer" --schema-delete-option "DeleteSchema"
