@@ -38,7 +38,7 @@ To implement this solution, we need to complete the following steps:
 
 If you prefer to use a CloudFormation template to create these resources, launch the following stack.
 
-[![cfn-stack](images/cfn-stack.png)]((https://d1h72l1210l8yk.cloudfront.net/sqlserverlicensetracker/v1/SQLServerLicenseTrackingSolution-template.yaml))
+[![cfn-stack](images/cfn-stack.png)]((https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=MSSQL-LT-Solution&templateURL=https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/single-account/SQLServerLicenseTrackingSolution-template.yaml))
 
 ## Create an IAM service role and policy
 
