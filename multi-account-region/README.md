@@ -77,15 +77,15 @@ If you prefer the first option, in the AWS License Manager console, choose **Set
 
     Use the following names for the license configurations:
 
-  - SQLServerENTLicenseConfiguration for Enterprise Edition
+    - SQLServerENTLicenseConfiguration for Enterprise Edition
 
-  - SQLServerSTDLicenseConfiguration for Standard Edition
+    - SQLServerSTDLicenseConfiguration for Standard Edition
 
-  - SQLServerDEVLicenseConfiguration for Developer Edition
+    - SQLServerDEVLicenseConfiguration for Developer Edition
 
-  - SQLServerWEBLicenseConfiguration for Web Edition
+    - SQLServerWEBLicenseConfiguration for Web Edition
 
-  - SQLServerEXPLicenseConfiguration for Express Edition
+    - SQLServerEXPLicenseConfiguration for Express Edition
 
     If you already have license configurations, edit the names to match. 
 
@@ -180,8 +180,7 @@ This template deploys the following resources:
 
 ## Centralizing Systems Manager Inventory data using resource data sync
 
-The [resource data
-sync](https://docs.aws.amazon.com/systems-manager/latest/userguide/Explorer-resource-data-sync.html)
+The [resource data sync](https://docs.aws.amazon.com/systems-manager/latest/userguide/Explorer-resource-data-sync.html)
 capability in AWS Systems Manager lets you sync inventory data from your
 managed instances into an [Amazon Simple Storage
 Service](https://aws.amazon.com/s3/) (Amazon S3) bucket. *The resource
@@ -202,12 +201,12 @@ running.
 **Note**: *DestinationDataSharing* is currently available with the AWS
 CLI and SDK only.
 
-aws ssm create-resource-data-sync --sync-name
-SQLServerLTS-ResourceDataSync --s3-destination
-"BucketName=**CENTRAL-S3-BUCKET-NAME**,SyncFormat=JsonSerDe,Region=**S3-BUCKET-REGION
-like
-ap-southeast-2**,DestinationDataSharing={DestinationDataSharingType=Organization}"
---region **RESOURCEDATASYNC-REGION-LIKE ap-southeast-2**
+```
+aws ssm create-resource-data-sync \
+    --sync-name SQLServerLTS-ResourceDataSync \
+    --s3-destination "BucketName=CENTRAL-S3-BUCKET-NAME,SyncFormat=JsonSerDe,Region=S3-BUCKET-REGION like ap-southeast-2,DestinationDataSharing={DestinationDataSharingType=Organization}" \
+    --region RESOURCEDATASYNC-REGION-LIKE ap-southeast-2
+```
 
 ## Invoking the solution using a State Manager association
 
@@ -231,19 +230,16 @@ organization.
     [TargetLocation](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_TargetLocation.html)
     in the AWS Systems Manager API Reference.
 
-aws ssm create-association \\  
-    --association-name "SQLServerLicenseTrackingSolution-Association"
-\\  
-    --name "Primary-SQLServerLicenseTrackingSolution-Document" \\  
-    --parameters
-'{"AutomationAssumeRole":\["arn:aws:iam::**MANAGEMENT-ACCOUNT-ID**:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"\]}'
-\\  
-    --no-apply-only-at-cron-interval \\  
-    --target-locations '\[{"Accounts": \["**OU1-ID LIKE
-ou-abcd-1qwert43**","**OU2-ID**","**OU3-ID**"\],"Regions": \["**REGION-1
-like us-east-1**","**REGION-2**"\],"TargetLocationMaxConcurrency":
+```
+aws ssm create-association \
+    --association-name "SQLServerLicenseTrackingSolution-Association" \
+    --name "Primary-SQLServerLicenseTrackingSolution-Document" \
+    --parameters '{"AutomationAssumeRole":\["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"]}' \
+    --no-apply-only-at-cron-interval \
+    --target-locations '[{"Accounts": ["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","OU3-ID"],"Regions": ["REGION-1 like us-east-1","REGION-2"],"TargetLocationMaxConcurrency":
 "4","TargetLocationMaxErrors": "4","ExecutionRoleName":
-"SQLServerLTS-SystemsManager-AutomationExecutionRole"}\]'
+"SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
+```
 
 This command will invoke the system to run it once immediately after it
 is created. To update it to run on a scheduled basis using
@@ -251,7 +247,6 @@ is created. To update it to run on a scheduled basis using
 [create-association](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ssm/create-association.html)
 in the AWS CLI Command Reference. 
 
-### 
 
 ### Validating the execution ran successfully
 
@@ -335,21 +330,20 @@ bucket created in the resource data sync step in part 1.
 1.  In the Athena console, copy and paste the following statement into
     the query editor and then choose **Run Query**.
 
-> CREATE DATABASE ssminventory
+```CREATE DATABASE ssminventory```
 
 The console creates a database named ssminventory*, *a logical grouping
 for the three tables you will be creating:
 
-  - AWS\_InstanceDetailedInformation: Consists of an instance’s metadata
+  - AWS_InstanceDetailedInformation: Consists of an instance’s metadata
     like CPU, cores, and so on.
 
-  - AWS\_Tag: Consists of all the tags defined for an instance.
+  - AWS_Tag: Consists of all the tags defined for an instance.
 
-  - Custom\_SQLServer: Consists of the SQL Server metadata, including
+  - Custom_SQLServer: Consists of the SQL Server metadata, including
     edition and version, running on an instance.
 
-For more information, see [Metadata collected by
-inventory](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-schema.html)
+For more information, see [Metadata collected by inventory](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-schema.html)
 in the AWS Systems Manager User Guide.
 
 If you want to set up more inventory tables in Athena, see [Walkthrough:
@@ -357,35 +351,39 @@ Use resource data sync to aggregate inventory
 data](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-resource-data-sync.html). 
 
 2.  Copy and the following statement and paste it into the query editor.
-    Replace DOC-EXAMPLE-BUCKET and bucket\_prefix** **with the name and
+    Replace DOC-EXAMPLE-BUCKET and bucket_prefix **with the name and
     prefix of the central Amazon S3 target created in part 1.
     Choose **Run Query**.
 
-> CREATE EXTERNAL TABLE IF NOT EXISTS
-> ssminventory.AWS\_InstanceDetailedInformation (  
-> \`Cpus\` string,  
-> \`osservicepack\` string,  
-> \`cpuhyperthreadenabled\` string,  
-> \`cpuspeedmhz\` string,  
-> \`cpusockets\` string,  
-> \`cpucores\` string,  
-> \`cpumodel\` string,  
-> \`resourceid\` string,  
-> \`capturetime\` string,  
-> \`schemaversion\` string  
-> )  
-> PARTITIONED BY (AccountId string, Region string, ResourceType
-> string)  
-> ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'  
-> WITH SERDEPROPERTIES (  
-> 'serialization.format' = '1'  
-> ) LOCATION
-> 's3://DOC-EXAMPLE-BUCKET/bucket\_prefix/AWS:InstanceDetailedInformation/'
+```
+CREATE EXTERNAL TABLE IF NOT EXISTS
+ssminventory.AWS_InstanceDetailedInformation (  
+`Cpus` string,  
+`osservicepack` string,  
+`cpuhyperthreadenabled` string,  
+`cpuspeedmhz` string,  
+`cpusockets` string,  
+`cpucores` string,  
+`cpumodel` string,  
+`resourceid` string,  
+`capturetime` string,  
+`schemaversion` string  
+)  
+PARTITIONED BY (AccountId string, Region string, ResourceType
+string)  
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'  
+WITH SERDEPROPERTIES (  
+'serialization.format' = '1'  
+) LOCATION
+'s3://DOC-EXAMPLE-BUCKET/bucket_prefix/AWS:InstanceDetailedInformation/'
+```
 
 3.  To partition the table, copy the following statement, paste it into
     the query editor, and then choose **Run Query**.
 
-> MSCK REPAIR TABLE ssminventory.AWS\_InstanceDetailedInformation
+```
+MSCK REPAIR TABLE ssminventory.AWS_InstanceDetailedInformation
+```
 
 **Note:** You will need to run this statement again as the partition
 changes (for example, for new accounts, regions, or resource types).
@@ -395,49 +393,56 @@ crawler](https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html) to
 automate this step.
 
 4.  To preview your data, choose **…** and then next to
-    the AWS\_InstanceDetailedInformation table, choose **Preview
+    the AWS_InstanceDetailedInformation table, choose **Preview
     table**.
 
 5.  Run the following queries individually in the Athena console to set
-    up the AWS\_Tag and Custom\_SQLServer tables.
+    up the AWS_Tag and Custom_SQLServer tables.
 
-> CREATE EXTERNAL TABLE IF NOT EXISTS ssminventory.AWS\_Tag (  
-> \`key\` string,  
-> \`value\` string,  
-> \`resourceid\` string,  
-> \`capturetime\` string,  
-> \`schemaversion\` string  
-> )  
-> PARTITIONED BY (AccountId string, Region string, ResourceType
-> string)  
-> ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'  
-> WITH SERDEPROPERTIES (  
-> 'serialization.format' = '1'  
-> ) LOCATION 's3://DOC-EXAMPLE-BUCKET/bucket\_prefix/AWS:Tag/'
-> 
-> MSCK REPAIR TABLE ssminventory.AWS\_Tag
-> 
-> CREATE EXTERNAL TABLE IF NOT EXISTS ssminventory.Custom\_SQLServer (  
-> \`name\` string,  
-> \`edition\` string,  
-> \`version\` string,  
-> \`resourceid\` string,  
-> \`capturetime\` string,  
-> \`schemaversion\` string  
-> )  
-> PARTITIONED BY (AccountId string, Region string, ResourceType
-> string)  
-> ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'  
-> WITH SERDEPROPERTIES (  
-> 'serialization.format' = '1'  
-> ) LOCATION 's3://DOC-EXAMPLE-BUCKET/bucket\_prefix/Custom:SQLServer/'
-> 
-> MSCK REPAIR TABLE ssminventory.Custom\_SQLServer
+```
+CREATE EXTERNAL TABLE IF NOT EXISTS ssminventory.AWS_Tag (  
+`key` string,  
+`value` string,  
+`resourceid` string,  
+`capturetime` string,  
+`schemaversion` string  
+)  
+PARTITIONED BY (AccountId string, Region string, ResourceType
+string)  
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'  
+WITH SERDEPROPERTIES (  
+'serialization.format' = '1'  
+) LOCATION 's3://DOC-EXAMPLE-BUCKET/bucket_prefix/AWS:Tag/'
+```
+
+```
+MSCK REPAIR TABLE ssminventory.AWS\_Tag
+```
+
+```
+CREATE EXTERNAL TABLE IF NOT EXISTS ssminventory.Custom_SQLServer (  
+`name` string,  
+`edition` string,  
+`version` string,  
+`resourceid` string,  
+`capturetime` string,  
+`schemaversion` string  
+)  
+PARTITIONED BY (AccountId string, Region string, ResourceType
+string)  
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'  
+WITH SERDEPROPERTIES (  
+'serialization.format' = '1'  
+) LOCATION 's3://DOC-EXAMPLE-BUCKET/bucket_prefix/Custom:SQLServer/'
+```
+
+```
+MSCK REPAIR TABLE ssminventory.Custom_SQLServer
+```
 
 ## Visualize the data using QuickSight
 
-Now that the data is available to access using Athena, you will use
-QuickSight to visualize it. 
+Now that the data is available to access using Athena, you will use QuickSight to visualize it. 
 
 ### Prepare the dataset
 
@@ -482,13 +487,12 @@ You can use the dataset you just created to build your own analysis and
 create visualizations as shown in Figure 6. To stay informed about
 important changes in your data, you can create threshold alerts using
 KPI and Gauge visuals in an Amazon QuickSight dashboard. For
-information, see [Working with Threshold Alerts in Amazon
-QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/threshold-alerts.html).
+information, see [Working with Threshold Alerts in Amazon QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/threshold-alerts.html).
 With these alerts, you can set thresholds for your data and be notified
 by email when your data crosses them. 
 
 ![](images/quicksight-analysis.png )
-<p align="center">Figure 12: QuickSight analysis</p>
+<p align="center">Figure 13: QuickSight analysis</p>
 
 
 # Conclusion
