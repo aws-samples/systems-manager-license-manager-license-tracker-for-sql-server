@@ -1,3 +1,5 @@
+## Centrally track Microsoft SQL Server licenses in AWS Organizations using AWS License Manager and AWS Systems Manager
+
 Most enterprises find it hard to maintain control of the commercial
 licensing of Microsoft, SAP, Oracle, and IBM products due to limited
 visibility. They wind up over-provisioning licenses to avoid the
@@ -37,9 +39,6 @@ AWS Systems Manager to discover SQL Server BYOL
 instances](https://aws.amazon.com/blogs/mt/use-aws-license-manager-and-aws-systems-manager-to-discover-sql-server-byol-instances/)
 blog post.
 
-In part 2 of this post, I’ll show you how to query and centralize your
-data so you have a unified view of your license utilization across AWS.
-
 # Prerequisites
 
 To deploy this solution in a multi-account or multi-region architecture
@@ -60,21 +59,14 @@ your workloads are running. 
     maximum flexibility and allows you to share license configurations
     outside your organization.
 
-> If you prefer the first option, in the AWS License Manager console,
-> choose **Settings**, and then select **Link AWS Organizations
-> accounts**, as shown in Figure 1. 
-> 
+If you prefer the first option, in the AWS License Manager console, choose **Settings**, and then select **Link AWS Organizations accounts**, as shown in Figure 1. 
+
 > **Note:** For this solution, you can leave cross-account inventory
 > search disabled unless you want to discover other software license
 > usage.
 
-![](media/image1.png)
-
-*Figure 1: Linking AWS Organizations accounts in the License Manager
-console*
-
-\[ALT TEXT: On the Settings page, under Account management, the Link AWS
-Organizations accounts checkbox is selected.\]
+![](images/lm-link-organization.png)
+<p align="center">Figure 1: Linking AWS Organizations accounts in the License Manager console</p>
 
   - **Create license configurations.** In AWS License Manager, create
     license configurations for the SQL Server editions in each AWS
@@ -83,7 +75,7 @@ Organizations accounts checkbox is selected.\]
     your software vendor. For instructions, see Create a license
     configuration in the AWS License Manager User Guide.
 
-> Use the following names for the license configurations:
+    Use the following names for the license configurations:
 
   - SQLServerENTLicenseConfiguration for Enterprise Edition
 
@@ -95,7 +87,7 @@ Organizations accounts checkbox is selected.\]
 
   - SQLServerEXPLicenseConfiguration for Express Edition
 
-> If you already have license configurations, edit the names to match. 
+    If you already have license configurations, edit the names to match. 
 
   - **Share license configurations.** After you have defined your
     configurations, use AWS Organizations or AWS Resource Access Manager
@@ -104,18 +96,10 @@ Organizations accounts checkbox is selected.\]
     Manager](https://aws.amazon.com/blogs/mt/tracking-software-usage-across-multiple-aws-accounts-using-aws-license-manager/) blog
     post.
 
-> After you share your principals (accounts) and resources (license
-> configurations), you should see them in the AWS Resource Access
-> Manager console:
+    After you share your principals (accounts) and resources (license configurations), you should see them in the AWS Resource Access Manager console:
 
-![](media/image2.png)
-
-*Figure 2: Shared principals and resources in the AWS Resource Access
-Manager console*
-
-\[ALT TEXT: The AWS Resource Access Manager console displays shared
-resources and shared principals in lists organized by ID, type, and
-status.\]
+![](images/ram-lm-shared.png)
+<p align="center">Figure 2: Shared principals and resources in the AWS Resource Access Manager console</p>
 
 # Solution overview
 
@@ -143,22 +127,14 @@ capabilities:
     to maintain the information collected about the instances and the
     SQL Server editions running on them.
 
-![](media/image3.png)
+![](images/solution-arch.png )
+<p align="center">Figure 3: Solution architecture</p>
 
-*Figure 3: Solution architecture*
-
-\[ALT TEXT: In step 1, the primary Automation document is invoked, which
-in step 2 removes old custom Inventory data. In step 3, the secondary
-Automation document is invoked. In step 4, old AWS License Manager data
-is removed. In step 5, the instances are discovered. In step 6,
-Inventory is updated. In step 7, AWS License Manager is updated. In step
-8, the Inventory data is aggregated using resource data sync. In steps 9
-and 10, the Inventory data is queried and visualized using Athena and
-QuickSight.\]
 
 # Walkthrough
 
-![](media/image4.png)  
+[![cfn-stack](images/cfn-stack.png)]((https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=MSSQL-LT-Solution&templateURL=https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/SQLServerLicenceTrackingSolution.yaml))
+
 To deploy the solution, launch this CloudFormation template in the
 management account of your organization.  
 
@@ -166,38 +142,25 @@ This template deploys the following resources:
 
 1.  **Systems Manager documents**
     
-      - The primary Automation document
-        (Primary-SQLServerLicenseTrackingSolution-Document) includes the
-        logic to execute steps 1 and 2 of the walkthrough.
+      - The primary Automation document (Primary-SQLServerLicenseTrackingSolution-Document) includes the logic to execute steps 1 and 2 of the walkthrough.
     
-    <!-- end list -->
-    
-      - The secondary Automation document
-        (Secondary-SQLServerLicenseTrackingSolution-Document) includes
-        the logic to execute steps 3-8 of the walkthrough.
+      - The secondary Automation document (Secondary-SQLServerLicenseTrackingSolution-Document) includes the logic to execute steps 3-8 of the walkthrough.
 
 2.  **All the IAM roles required to deploy the solution**
     
-    1.  Automation administration role (for the administration of the
-        Automation documents)
+    - Automation administration role (for the administration of the Automation documents)
+        
+    - Automation execution role (for the execution of the Automation documents)
     
-    2.  Automation execution role (for the execution of the Automation
-        documents)
+    - CloudFormation StackSets administration role (to deploy the solution across multiple accounts and Regions)
     
-    3.  CloudFormation StackSets administration role (to deploy the
-        solution across multiple accounts and Regions)
+    - CloudFormation StackSets execution role (to deploy the solution across multiple accounts and Regions)
     
-    4.  CloudFormation StackSets execution role (to deploy the solution
-        across multiple accounts and Regions)
-    
-    5.  Lambda execution role (for the execution of the
-        Modify-SQLServerSecondaryDocument-Permission Lambda function)
+    - Lambda execution role (for the execution of the Modify-SQLServerSecondaryDocument-Permission Lambda function)
 
 3.  **S3 bucket**
 
-> This central bucket in the management account stores all the data from
-> resource data syncs across the accounts, as shown in step 8 of Figure
-> 3.
+    This central bucket in the management account stores all the data from resource data syncs across the accounts, as shown in step 8 of Figure 3.
 
 4.  **Lambda**
     
@@ -298,64 +261,42 @@ Manager console and from the left navigation pane, choose
 execution of the *Primary-SQLSeverLicenseTrackingSolution-Document*, as
 shown in Figure 4.
 
-![](media/image5.png)
-
-*Figure 4: Automation executions (management account)*
-
-\[ALT TEXT: On the Executions tab, the Automation executions are
-displayed in a table organized by execution ID, document name, status,
-start time, end time, and executed by.\]
+![](images/ssm-automation-execution-result.png)
+<p align="center">Figure 4: Automation executions (management account)</p>
 
 Depending on the number of Regions, accounts, and instances you execute
 this solution against, a successful run of the execution looks like the
 following:
 
-![](media/image6.png)
-
-*Figure 5: Automation execution detail (management account)*
-
-\[ALT TEXT: On the Execution detail page for the primary Automation
-document, there are sections for execution description, outputs, status,
-and executed steps.\]
+![](images/ssm-automation-dashboard.png)
+<p align="center">Figure 5: Automation execution detail (management account)</p>
 
 On the details page for the execution, choose any of the **step ID**s,
-and then under **Outputs,** choose the **execution ID.** In the
+and then under **Outputs**, choose the **execution ID.** In the
 **Outputs** section, you can find the *Automation execution ID* of the
 secondary document in the member account, as shown in Figure 6.
 
-![](media/image7.png) 
+![](images/execution-id.png)
+<p align="center">Figure 6: Automation outputs (management account)</p>
 
-*Figure 6: Automation outputs (management account)*
-
-\[ALT TEXT: In the Outputs section, there is text that says the
-Secondary-SQLServerLicenseTrackingSolution-Document has been
-successfully invoked. The text includes the AutomationExecutionId of the
-secondary Automation document.\]
 
 In the Systems Manager console, search for this ID in the member account
 and Region. Choose the execution ID link to get more information about
 the execution.
 
-![](media/image8.png)
+![](images/member-account-ssm-dashboard.png)
+<p align="center">Figure 7: Automation executions (member account)</p>
 
-*Figure 7: Automation executions (member account)*
-
-\[ALT TEXT: On the Executions tab, under Automation executions, the
-secondary Automation document has a status of Success to indicate it was
-successfully invoked.\]
 
 To confirm that the license utilization data has been updated in AWS
 License Manager, using the management account and selected Region, open
 the **License Manager** console. Depending on the licenses consumed, the
 **Customer managed licenses** list will look something like Figure 8:
 
-![](media/image9.png)
 
-*Figure 8: Customer managed licenses*
+![](images/customer-managed-licenses.png)
+<p align="center">Figure 8: Customer managed licenses</p>
 
-\[ALT TEXT: The customer managed licenses are displayed in a list
-organized by license configuration name, status, license type, licenses
-consumed, and account ID.\]
 
 ## Adding new accounts and Regions
 
@@ -514,44 +455,28 @@ Athena.
 1.  In the Amazon QuickSight console, select **custom\_sqlserver** and
     then choose **Edit/Preview data**.
 
-![](media/image2.png)
+![](images/dataset-in-quicksight.png)
+<p align="center">Figure 9: Creating a dataset in QuickSight</p>
 
-*Figure 2: Creating a dataset in QuickSight*
-
-\[ALT TEXT: In the Quicksight console, various data sources are listed
-to create a dataset.\]
 
 2.  In the editor view, choose **Add data**, and then select the other
     tables as shown in Figure 3.
 
-![](media/image3.png)
+![](images/quicksight-data-editor.png)
+<p align="center">Figure 10: QuickSight dataset editor</p>
 
-*Figure 3: QuickSight dataset editor*
-
-\[ALT TEXT: In the QuickSight dataset editor, there are three tables
-under ssminventory: aws\_tag, aws\_instancedetailedinformation, and
-custom\_sqlserver.\]
 
 3.  Update the join configuration using **resourceid** as the join
     clause, as shown in Figure 4.
 
-![](media/image4.png)
-
-*Figure 4: Specifying the join configuration*
-
-\[ALT TEXT: In the QuickSight dataset editor, resourceid is used as the
-join clause using an inner join type for aws\_tag,
-aws\_instancedetailedinformation, and custom\_sqlserver.\]
+![](images/quicksight-data-editor.png)
+<p align="center">Figure 11: Specifying the join configuration</p>
 
 4.  Before you apply the changes, exclude all duplicate fields and
     update the data types as shown in Figure 5. 
 
-![](media/image5.png)
-
-*Figure 5: Excluded fields*
-
-\[ALT TEXT: There is a list of the 18 included fields and the 12
-excluded fields.\]
+![](images/excluded-fields.png)
+<p align="center">Figure 12: Excluded fields</p>
 
 You can use the dataset you just created to build your own analysis and
 create visualizations as shown in Figure 6. To stay informed about
@@ -562,42 +487,9 @@ QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/threshold-alerts.
 With these alerts, you can set thresholds for your data and be notified
 by email when your data crosses them. 
 
-![](media/image6.png)
+![](images/quicksight-analysis.png )
+<p align="center">Figure 12: QuickSight analysis</p>
 
-*Figure 6: QuickSight analysis*
-
-\[ALT TEXT: In the QuickSight console, there are example visualization
-charts created using the dataset. They include licenses consumed across
-accounts, environments, region, and cost centers.\]
-
-# Cleaning up resources
-
-If you would like to remove the resources and solution after testing you
-can clean up the resources deployed by the CloudFormation template using
-the following instructions:
-
-1.  In all Regions where the solution is deployed, modify the
-    permissions for the secondary Automation document. For instructions,
-    see [Modify permissions for a shared SSM
-    document](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-share-modify.html)
-    in the AWS Systems Manager User Guide.
-
-2.  Use the AWS CloudFormation console or AWS CLI to delete the main
-    CloudFormation stack. When you delete the CloudFormation stack, all
-    the solution components will be deleted.
-
-3.  Use the [Systems Manager
-    console](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-state-assoc-edit.html)
-    or [AWS
-    CLI](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ssm/delete-association.html)
-    to delete the association.
-
-4.  Use the [Systems Manager
-    console](https://docs.aws.amazon.com/systems-manager/latest/userguide/Explorer-using-resource-data-sync-delete.html)
-    or [AWS
-    CLI](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ssm/delete-resource-data-sync.html)
-    to delete the resource data syncs in all member accounts. Complete
-    this step in each AWS Region where the solution is deployed.
 
 # Conclusion
 
