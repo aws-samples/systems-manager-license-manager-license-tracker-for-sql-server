@@ -3,15 +3,6 @@ Description: 'CloudFormation template to deploy the Primary Automation document 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups: 
-      - 
-        Label: 
-          default: 'License Manager Configuration for SQL Servers'
-        Parameters: 
-          - SQLServerENTLicenseConfiguration
-          - SQLServerSTDLicenseConfiguration
-          - SQLServerWEBLicenseConfiguration
-          - SQLServerEXPLicenseConfiguration
-          - SQLServerDEVLicenseConfiguration
       -
         Label: 
           default: 'Resource target details for License Tracker solution'
@@ -19,16 +10,6 @@ Metadata:
           - TagKey
           - TagValue
     ParameterLabels:
-      SQLServerENTLicenseConfiguration:
-        default: 'Enterprise Edition'
-      SQLServerSTDLicenseConfiguration:
-        default: 'Standard Edition'
-      SQLServerWEBLicenseConfiguration:
-        default: 'Web Edition'
-      SQLServerEXPLicenseConfiguration:
-        default: 'Express Edition'
-      SQLServerDEVLicenseConfiguration:
-        default: 'Developer Edition'
       TagKey:
         default: 'Tag Key'
       TagValue:
@@ -42,36 +23,6 @@ Parameters:
     Description: (Required) This parameter is required if you want to target all managed instances using tags
     Type: String
     Default: 'true'
-  SQLServerENTLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Enterprise Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Enterprise Edition or leave it as -
-  SQLServerSTDLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Standard Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Standard Edition or leave it as -
-  SQLServerWEBLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Web Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Web Edition or leave it as -
-  SQLServerEXPLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Express Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Express Edition or leave it as -
-  SQLServerDEVLicenseConfiguration:
-    Description: License Configuration ARN for SQL Server Developer Edition
-    Type: String
-    Default: '-'
-    AllowedPattern: '-|arn:aws:license-manager:[a-z0-9-]*[-]\d:[0-9]{12}:license-configuration:lic-[a-z0-9]*$'
-    ConstraintDescription: Provide a valid License Manager Configuration ARN for SQL Developer Edition or leave it as -
 Resources:
   PrimarySSMDocument:
     Type: 'AWS::SSM::Document'
@@ -96,31 +47,6 @@ Resources:
               "type" : "String",
               "description" : "(Optional) This parameter is required if you want to target all managed instances using tags",
               "default" : "true"
-            },
-            "SQLServerENTLicenseConfiguration" : {
-              "type" : "String",
-              "description" : "License Configuration ARN for SQL Enterprise Edition or leave it as -",
-              "default" : "${SQLServerENTLicenseConfiguration}"
-            },
-            "SQLServerEXPLicenseConfiguration" : {
-              "type" : "String",
-              "description" : "License Configuration ARN for SQL Express Edition or leave it as -",
-              "default" : "${SQLServerEXPLicenseConfiguration}"
-            },
-            "SQLServerSTDLicenseConfiguration" : {
-              "type" : "String",
-              "description" : "License Configuration ARN for SQL Standard Edition or leave it as -",
-              "default" : "${SQLServerSTDLicenseConfiguration}"
-            },
-            "SQLServerWEBLicenseConfiguration" : {
-              "type" : "String",
-              "description" : "License Configuration ARN for SQL Web Edition or leave it as -",
-              "default" : "${SQLServerWEBLicenseConfiguration}"
-            },
-            "SQLServerDEVLicenseConfiguration" : {
-              "type" : "String",
-              "description" : "License Configuration ARN for SQL Developer Edition or leave it as -",
-              "default" : "${SQLServerDEVLicenseConfiguration}"
             },
             "AutomationAssumeRole" : {
               "type" : "String",
