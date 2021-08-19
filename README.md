@@ -11,5 +11,5 @@ If your enterprise uses AWS, you can address this challenge in two ways:
 It’s still possible that your teams might provision software products not governed by these two options, which means you could receive an unwanted surprise in the next audit. 
 
 We show you how to build a solution that discovers and tracks your Microsoft SQL Server BYOL instances. You can enhance this approach to target other commercial software such as Oracle, SAP, or IBM. There are two solutions that you could leverage depending your environment and use-case:
-* [Tracking in a single account] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html)
-* [Tracking across multiple accounts and regions] (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html)
+* [Tracking in a single account](https://github.com/aws-samples/systems-manager-license-manager-license-tracker-for-sql-server/tree/main/single-account)
+* [Tracking across multiple accounts and regions](https://github.com/aws-samples/systems-manager-license-manager-license-tracker-for-sql-server/tree/main/multi-account-region)
