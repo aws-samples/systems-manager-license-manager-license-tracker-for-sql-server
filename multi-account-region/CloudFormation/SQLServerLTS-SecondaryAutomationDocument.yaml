@@ -479,41 +479,67 @@ Resources:
                       Name='Secondary-SQLServerLicenseTrackingSolution-Document',
                       PermissionType='Share'
                     )
+
+                    oldAccountsList = oldDocumentPermissionResponse['AccountIds']
+  
+                    #To bypass ModifyDocumentPermission API's limit of 20 accounts - https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ModifyDocumentPermission.html
+                    oldAccounts = [oldAccountsList[x:x+20] for x in range(0, len(oldAccountsList), 20)]
                     
-                    #Remove old document permissions
-                    if oldDocumentPermissionResponse['AccountIds']:
-                      removeOldDocumentPermissionResponse = ssm.modify_document_permission(
+                    for oldAccount in oldAccounts:
+                      #Remove old document permissions
+                      if oldDocumentPermissionResponse['AccountIds']:
+                        removeOldDocumentPermissionResponse = ssm.modify_document_permission(
+                          Name='Secondary-SQLServerLicenseTrackingSolution-Document',
+                          PermissionType='Share',
+                          AccountIdsToRemove=oldAccount
+                        )
+                      
+                      if oldDocumentPermissionResponse['ResponseMetadata']:
+                        print(f"Successfully removed the following accounts from Secondary-SQLServerLicenseTrackingSolution-Document permissions (in batches of 20): "+','.join(oldAccount))
+                        if oldDocumentPermissionResponse['ResponseMetadata']['HTTPStatusCode'] == 200:
+                          responseValue = oldDocumentPermissionResponse['ResponseMetadata']
+                          responseData = {}
+                          responseData['Data'] = responseValue
+                          cfnresponse.send(events, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
+                        else:
+                          responseValue = "Error"
+                          responseData = {}
+                          responseData['Error'] = responseValue
+                          cfnresponse.send(events, context, cfnresponse.FAILED, responseData, "CustomResourcePhysicalID")
+                          raise Exception(f"There was a problem removing the permissions of Secondary-SQLServerLicenseTrackingSolution-Document, check the logs for more details")
+                      else:
+                        raise Exception(f"There seems to be a problem, check the logs for more details")
+
+                    #To bypass ModifyDocumentPermission API's limit of 20 accounts - https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ModifyDocumentPermission.html    
+                    newAccounts = [accountList[x:x+20] for x in range(0, len(accountList), 20)]
+                    
+                    for newAccount in newAccounts: 
+                      #Modify the document permissions with the new list of accounts from the specified OUs
+                      response = ssm.modify_document_permission(
                         Name='Secondary-SQLServerLicenseTrackingSolution-Document',
                         PermissionType='Share',
-                        AccountIdsToRemove=oldDocumentPermissionResponse['AccountIds']
+                        AccountIdsToAdd=newAccount
                       )
-                    
-                    #Modify the document permissions with the new list of accounts from the specified OUs
-                    response = ssm.modify_document_permission(
-                      Name='Secondary-SQLServerLicenseTrackingSolution-Document',
-                      PermissionType='Share',
-                      AccountIdsToAdd=accountList
-                    )
-                    
-                    if response['ResponseMetadata']:
-                      if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                        print(f"Successfully modified Secondary-SQLServerLicenseTrackingSolution-Document permissions to be shared with these accounts: "+','.join(accountList))
-                        responseValue = response['ResponseMetadata']
-                        responseData = {}
-                        responseData['Data'] = responseValue
-                        cfnresponse.send(events, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
+                      
+                      if response['ResponseMetadata']:
+                        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                          print(f"Successfully modified Secondary-SQLServerLicenseTrackingSolution-Document permissions to be shared with these accounts (in batches of 20): "+','.join(newAccount))
+                          responseValue = response['ResponseMetadata']
+                          responseData = {}
+                          responseData['Data'] = responseValue
+                          cfnresponse.send(events, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
+                        else:
+                          responseValue = "Error"
+                          responseData = {}
+                          responseData['Error'] = responseValue
+                          cfnresponse.send(events, context, cfnresponse.FAILED, responseData, "CustomResourcePhysicalID")
+                          raise Exception(f"There was a problem modifying the permissions of Secondary-SQLServerLicenseTrackingSolution-Document, check the logs for more details")
                       else:
-                        responseValue = "Error"
-                        responseData = {}
-                        responseData['Error'] = responseValue
-                        cfnresponse.send(events, context, cfnresponse.FAILED, responseData, "CustomResourcePhysicalID")
-                        raise Exception(f"There was a problem modifying the permissions of Secondary-SQLServerLicenseTrackingSolution-Document, check the logs for more details")
-                    else:
-                      raise Exception(f"There seems to be a problem, check the logs for more details")
+                        raise Exception(f"There seems to be a problem, check the logs for more details")
               MemorySize: 128
               Role: !GetAtt LambdaFunctionExecutionRole.Arn
               Runtime: "python3.8"
-              Timeout: 3
+              Timeout: 30
               TracingConfig: 
                 Mode: "PassThrough"
           ScheduledRule:
