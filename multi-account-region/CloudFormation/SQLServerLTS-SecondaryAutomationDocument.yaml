@@ -486,7 +486,7 @@ Resources:
                       removeOldDocumentPermissionResponse = ssm.modify_document_permission(
                         Name='Secondary-SQLServerLicenseTrackingSolution-Document',
                         PermissionType='Share',
-                        AccountIdsToRemove='all'
+                        AccountIdsToRemove=['All']
                       )
                     
                     if oldDocumentPermissionResponse['ResponseMetadata']:
@@ -542,7 +542,7 @@ Resources:
             Properties:
               Name: "Modify-SQLServerSecondaryDocument-Permission-Rule"
               Description: "Trigger for Modify-SQLServerSecondaryDocument-Permission function"
-              ScheduleExpression: "rate(30 days)"
+              ScheduleExpression: "rate(1 day)"
               State: "ENABLED"
               Targets: 
               - 
