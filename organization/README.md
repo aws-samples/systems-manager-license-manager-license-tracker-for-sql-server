@@ -186,50 +186,9 @@ collected. You can also sync Inventory data from multiple AWS accounts
 into a single S3 bucket, making the bucket an inventory data lake for
 multiple AWS accounts. You can then use the data lake for advanced
 queries and analysis of inventory data across multiple accounts. For
-more information, see [Use resource data sync to aggregate inventory
-data](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-resource-data-sync.html)
-in the AWS Systems Manager User Guide.
-
-To use resource data sync, execute the following command using AWS CloudShell 
-in the management account using the following input file. For more details refer 
-to [create-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/create-resource-data-sync.html).
-
-```
-aws ssm create-resource-data-sync --cli-input-json file://input.json
-```
-
-Update INVENTORY-BUCKET_NAME, BUCKET-REGION, OU-ID (Target OUs) and SOURCE_REGIONS (Target Regions) 
-in the json file.
-**input.json**
-```
-{
-    "SyncName": "SQLServer-LTS-RDS",
-    "S3Destination": {
-        "BucketName": "INVENTORY-BUCKET_NAME",
-        "SyncFormat": "JsonSerDe",
-        "Region": "BUCKET-REGION",
-        "DestinationDataSharing": {
-            "DestinationDataSharingType": "Organization"
-        }
-    },
-    "SyncType": "SyncToDestination",
-    "SyncSource": {
-        "SourceType": "AwsOrganizations",
-        "AwsOrganizationsSource": {
-            "OrganizationSourceType": "OrganizationalUnits",
-            "OrganizationalUnits": [
-              {"OrganizationalUnitId": "OU-ID-1"},
-			        {"OrganizationalUnitId": "OU-ID-2"}
-            ]
-        },
-        "SourceRegions": [
-            "SOURCE_REGIONS"
-        ],
-        "IncludeFutureRegions": true,
-        "EnableAllOpsDataSources": false
-    }
-}
-```
+more information, refer to the instructions under Create an inventory 
+resource data sync for accounts defined in AWS Organizations in [Use resource 
+data sync to aggregate inventory data](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-resource-data-sync.html).
 
 ## Invoking the solution using a State Manager association
 
@@ -341,7 +300,8 @@ to update the current association. Specify the accounts and Regions in
 --target-locations.
 
 **Resource data sync**
-To update the resource data sync in the management account with new OUs/regions refer to [update-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/update-resource-data-sync.html).
+Add new resource data sync in the account and Region as described earlier 
+in the post in “Centralizing Systems Manager Inventory data using resource data sync.”
 
 ## Setup databases in Athena
 Athena will help us query the aggregated data in the centralized S3
