@@ -34,7 +34,7 @@ blog post.
 # Prerequisites
 
 To deploy this solution across multiple Regions and/or accounts in 
-an organization, **complete **these steps.  
+an organization, **complete** these steps.  
 
   - **Enable trusted access with AWS Organizations for CloudFormation.** 
     Complete the following tasks as described in [Enable trusted access 
@@ -62,8 +62,8 @@ an organization, **complete **these steps.  
 ![](images/lm-link-organization.png)
 <p align="center">Figure 1: Linking AWS Organizations accounts in the License Manager console</p>
 
-    Once completed, under the Settings section you should see a link to the new Resource Share ARN (Resource Access Manager), 
-    as shown in Figure 2.
+  Once completed, under the Settings section you should see a link to the new Resource Share ARN (Resource Access Manager), 
+  as shown in Figure 2.
 
 ![](images/lm-settings-wth-resourceshare.png)
 <p align="center">Figure 2: License Manager Settings with resource share ARN</p>
