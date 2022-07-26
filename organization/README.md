@@ -185,10 +185,12 @@ data sync* then updates the S3 bucket whenever new Inventory data is
 collected. You can also sync Inventory data from multiple AWS accounts
 into a single S3 bucket, making the bucket an inventory data lake for
 multiple AWS accounts. You can then use the data lake for advanced
-queries and analysis of inventory data across multiple accounts. For
-more information, refer to the instructions under Create an inventory 
+queries and analysis of inventory data across multiple accounts. 
+
+Refer to the instructions under Create an inventory 
 resource data sync for accounts defined in AWS Organizations in [Use resource 
-data sync to aggregate inventory data](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-resource-data-sync.html).
+data sync to aggregate inventory data](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-resource-data-sync.html) 
+to create resource data syncs for your member accounts.
 
 ## Invoking the solution using a State Manager association
 
