@@ -44,18 +44,7 @@ an organization, **complete** these steps.  
 
   - **Link License Manager to AWS Organizations in all targer Regions.** 
     To share license configurations with member accounts you will need to link 
-    License Manager to AWS Organizations.Depending on your current setup and requirements, you
-    can either link License Manager to AWS Organizations or use [AWS
-    Resource Access Manager](https://aws.amazon.com/ram/) to share
-    license configurations between accounts. For more information, see
-    the [Tracking software usage across multiple AWS accounts using AWS
-    License
-    Manager](https://aws.amazon.com/blogs/mt/tracking-software-usage-across-multiple-aws-accounts-using-aws-license-manager/)
-    blog post. I recommend the first option, as it allows for a shared
-    inventory and a seamless transition when accounts are added or
-    removed from the organization. However, the AWS RAM method provides
-    maximum flexibility and allows you to share license configurations
-    outside your organization.
+    License Manager to AWS Organizations.
 
     In the AWS License Manager console, choose **Settings**, and then select **Link AWS Organizations accounts**, as shown in Figure 1. 
 
@@ -166,7 +155,7 @@ This template deploys the following resources:
 4.  **Lambda**
     
       - The ModifySQLServerLTSDiscoverDocumentPermission function is
-        used to maintain permissions of the secondary Automation
+        used to maintain permissions of the Discover Automation
         document with the accounts in the organization.
     
       - A [trigger to
@@ -176,7 +165,7 @@ This template deploys the following resources:
         to ensure that the secondary document is shared with the latest
         set of accounts.
     
-Once your template has been deployed, using [AWS CloudShell](https://aws.amazon.com/cloudshell/) 
+Once your template has been deployed, using AWS CloudShell 
 invoke the lambda function to share the Discover document with all the members
 accounts within the organization. Replace REGION with your target regions:
 
@@ -201,10 +190,6 @@ more information, see [Use resource data sync to aggregate inventory
 data](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-resource-data-sync.html)
 in the AWS Systems Manager User Guide.
 
-To use resource data sync, execute the following [AWS
-CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
-command in each account across the AWS Regions where your workloads are
-running.
 To use resource data sync, execute the following command using AWS CloudShell 
 in the management account using the following input file. For more details refer 
 to [create-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/create-resource-data-sync.html).
