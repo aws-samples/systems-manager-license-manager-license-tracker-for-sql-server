@@ -12,19 +12,11 @@ There are two main use-cases: 
 
   - Using license-included instances allows you access to fully
     compliant licenses, where AWS handles the tracking and management
-    for you. With this option, you either pay as you go, with no upfront
-    costs or long-term investment, or purchase [reserved
-    instances](https://aws.amazon.com/aws-cost-management/aws-cost-optimization/reserved-instances/) or [savings
-    plans](https://aws.amazon.com/savingsplans/) for cost savings in
-    exchange for a commitment to a consistent amount of usage. 
+    for you.  
 
   - [AWS License Manager](https://aws.amazon.com/license-manager/) makes
     it easy for you to set rules to manage, discover, and report
-    software license usage. When you use AWS License Manager to
-    associate an Amazon Machine Image (AMI) with a licensing
-    configuration, you can track the use of licenses in AWS or your
-    on-premises environment. You can also set rules in AWS License
-    Manager to prevent licensing violations to help you stay compliant.
+    software license usage. 
 
 There are some scenarios or software products (for example, Microsoft
 SQL Server editions) that cannot be governed by these two options, which
@@ -41,12 +33,18 @@ blog post.
 
 # Prerequisites
 
-To deploy this solution in a multi-account or multi-region architecture
-in an organization , **complete **these steps in each AWS Region where
-your workloads are running. 
+To deploy this solution across multiple Regions and/or accounts in 
+an organization, **complete **these steps.  
 
-  - **Link License Manager or share license configurations between
-    accounts.** Depending on your current setup and requirements, you
+  - **Enable trusted access with AWS Organizations for CloudFormation.** 
+    Complete the following tasks as described in [Enable trusted access 
+    with AWS Organizations](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-enable-trusted-access.html)
+    - Enable all features in AWS Organizations. With only consolidated billing features enabled, you cannot create a stack set with service-managed permissions.  
+    - Enable trusted access with AWS Organizations. After trusted access is enabled, StackSets creates the necessary IAM roles in the organization's management account and target (member) accounts when you create stack sets with service-managed permissions.
+
+  - **Link License Manager to AWS Organizations in all targer Regions.** 
+    To share license configurations with member accounts you will need to link 
+    License Manager to AWS Organizations.Depending on your current setup and requirements, you
     can either link License Manager to AWS Organizations or use [AWS
     Resource Access Manager](https://aws.amazon.com/ram/) to share
     license configurations between accounts. For more information, see
@@ -59,25 +57,30 @@ your workloads are running. 
     maximum flexibility and allows you to share license configurations
     outside your organization.
 
-If you prefer the first option, in the AWS License Manager console, choose **Settings**, and then select **Link AWS Organizations accounts**, as shown in Figure 1. 
-
-> **Note:** For this solution, you can leave cross-account inventory
-> search disabled unless you want to discover other software license
-> usage.
+    In the AWS License Manager console, choose **Settings**, and then select **Link AWS Organizations accounts**, as shown in Figure 1. 
 
 ![](images/lm-link-organization.png)
 <p align="center">Figure 1: Linking AWS Organizations accounts in the License Manager console</p>
+
+    Once completed, under the Settings section you should see a link to the new Resource Share ARN (Resource Access Manager), 
+    as shown in Figure 2.
+
+![](images/lm-settings-wth-resourceshare.png)
+<p align="center">Figure 2: License Manager Settings with resource share ARN</p>
+    
 
   - **Create license configurations.** In AWS License Manager, create
     license configurations for the SQL Server editions in each AWS
     Region where you will be deploying this solution. A license
     configuration represents the licensing terms in the agreement with
-    your software vendor. For instructions, see Create a license
-    configuration in the AWS License Manager User Guide.
+    your software vendor. Using [AWS CloudShell](https://aws.amazon.com/cloudshell/), 
+    run the following command to create the following license configurations (case-sensitive):
 
-    Use the following names for the license configurations:
+    ```
+    for r in {REGION-1,REGION-2}; do for i in { SQLServerEELicenseConfiguration, SQLServerSTDLicenseConfiguration, SQLServerDEVLicenseConfiguration, SQLServerWEBLicenseConfiguration, SQLServerEXPLicenseConfiguration};  do aws license-manager create-license-configuration --name "$i" --license-counting-type vCPU --region $r; done; done
+    ```
 
-    - SQLServerENTLicenseConfiguration for Enterprise Edition
+    - SQLServerEELicenseConfiguration for Enterprise Edition
 
     - SQLServerSTDLicenseConfiguration for Standard Edition
 
@@ -86,8 +89,6 @@ If you prefer the first option, in the AWS License Manager console, choose **Set
     - SQLServerWEBLicenseConfiguration for Web Edition
 
     - SQLServerEXPLicenseConfiguration for Express Edition
-
-    If you already have license configurations, edit the names to match. 
 
   - **Share license configurations.** After you have defined your
     configurations, use AWS Organizations or AWS Resource Access Manager
@@ -99,7 +100,7 @@ If you prefer the first option, in the AWS License Manager console, choose **Set
     After you share your principals (accounts) and resources (license configurations), you should see them in the AWS Resource Access Manager console:
 
 ![](images/ram-lm-shared.png)
-<p align="center">Figure 2: Shared principals and resources in the AWS Resource Access Manager console</p>
+<p align="center">Figure 3: Shared principals and resources in the AWS Resource Access Manager console</p>
 
 # Solution overview
 
@@ -112,7 +113,7 @@ The solution described in this blog post enhances the auto-discovery
 capability and provides license edition details for instances deployed
 across AWS Regions and accounts in AWS Organizations.
 
-Figure 3 shows the solution architecture. In addition to AWS License
+Figure 4 shows the solution architecture. In addition to AWS License
 Manager, the solution uses the following Systems Manager features and
 capabilities:
 
@@ -128,12 +129,12 @@ capabilities:
     SQL Server editions running on them.
 
 ![](images/solution-arch.png )
-<p align="center">Figure 3: Solution architecture</p>
+<p align="center">Figure 4: Solution architecture</p>
 
 
 # Walkthrough
 
-[![cfn-stack](images/cfn-stack.png)]((https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=MSSQL-LT-Solution&templateURL=https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/SQLServerLicenceTrackingSolution.yaml))
+[![cfn-stack](images/cfn-stack.png)]((https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=SQLServer-LTS&templateURL=https://bhatprav-blog-artefacts.s3.ap-southeast-2.amazonaws.com/sql-server-lts/template.yaml))
 
 To deploy the solution, launch this CloudFormation template in the
 management account of your organization.  
@@ -142,9 +143,9 @@ This template deploys the following resources:
 
 1.  **Systems Manager documents**
     
-      - The primary Automation document (Primary-SQLServerLicenseTrackingSolution-Document) includes the logic to execute steps 1 and 2 of the walkthrough.
+      - The setup Automation document (SetupSQLServerLicenseTrackingSolutionDocument) includes the logic to execute steps 1 and 2 of the walkthrough.
     
-      - The secondary Automation document (Secondary-SQLServerLicenseTrackingSolution-Document) includes the logic to execute steps 3-8 of the walkthrough.
+      - The secondary Automation document (DiscoverSQLServerLicenseTrackingSolutionDocument) includes the logic to execute steps 3-8 of the walkthrough.
 
 2.  **All the IAM roles required to deploy the solution**
     
@@ -156,15 +157,15 @@ This template deploys the following resources:
     
     - CloudFormation StackSets execution role (to deploy the solution across multiple accounts and Regions)
     
-    - Lambda execution role (for the execution of the Modify-SQLServerSecondaryDocument-Permission Lambda function)
+    - Lambda execution role (for the execution of the ModifySQLServerLTSDiscoverDocumentPermission Lambda function)
 
 3.  **S3 bucket**
 
-    This central bucket in the management account stores all the data from resource data syncs across the accounts, as shown in step 8 of Figure 3.
+    This central bucket in the management account stores all the data from resource data syncs across the accounts, as shown in step 8 of Figure 4.
 
 4.  **Lambda**
     
-      - The Modify-SQLServerSecondaryDocument-Permission function is
+      - The ModifySQLServerLTSDiscoverDocumentPermission function is
         used to maintain permissions of the secondary Automation
         document with the accounts in the organization.
     
@@ -175,8 +176,15 @@ This template deploys the following resources:
         to ensure that the secondary document is shared with the latest
         set of accounts.
     
-      - A custom resource is created for the initial invocation of the
-        Lambda function.
+Once your template has been deployed, using [AWS CloudShell](https://aws.amazon.com/cloudshell/) 
+invoke the lambda function to share the Discover document with all the members
+accounts within the organization. Replace REGION with your target regions:
+
+```
+for i in {REGION-1,REGION-2}; do aws lambda invoke --function-name ModifySQLServerLTSDiscoverDocumentPermission output.txt --region $i; done
+```
+
+**Note**: The lambda function is scheduled to run every day so all subsequent invocations will be performed automatically.
 
 ## Centralizing Systems Manager Inventory data using resource data sync
 
@@ -197,15 +205,46 @@ To use resource data sync, execute the following [AWS
 CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 command in each account across the AWS Regions where your workloads are
 running.
-
-**Note**: *DestinationDataSharing* is currently available with the AWS
-CLI and SDK only.
+To use resource data sync, execute the following command using AWS CloudShell 
+in the management account using the following input file. For more details refer 
+to [create-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/create-resource-data-sync.html).
+Update INVENTORY-BUCKET_NAME, BUCKET-REGION, OU-ID (Target OUs) and SOURCE_REGIONS (Target Regions) 
+in the input.json.
 
 ```
-aws ssm create-resource-data-sync \
-    --sync-name SQLServerLTS-ResourceDataSync \
-    --s3-destination "BucketName=CENTRAL-S3-BUCKET-NAME,SyncFormat=JsonSerDe,Region=S3-BUCKET-REGION like ap-southeast-2,DestinationDataSharing={DestinationDataSharingType=Organization}" \
-    --region RESOURCEDATASYNC-REGION-LIKE ap-southeast-2
+aws ssm create-resource-data-sync --cli-input-json file://input.json
+```
+
+**input.json**
+```
+{
+    "SyncName": "SQLServer-LTS-RDS",
+    "S3Destination": {
+        "BucketName": "INVENTORY-BUCKET_NAME",
+        "SyncFormat": "JsonSerDe",
+        "Region": "BUCKET-REGION",
+        "DestinationDataSharing": {
+            "DestinationDataSharingType": "Organization"
+        }
+    },
+    "SyncType": "SyncToDestination",
+    "SyncSource": {
+        "SourceType": "AwsOrganizations",
+        "AwsOrganizationsSource": {
+            "OrganizationSourceType": "OrganizationalUnits",
+            "OrganizationalUnits": [
+              {"OrganizationalUnitId": "OU-ID-1"},
+			        {"OrganizationalUnitId": "OU-ID-2"}
+            ]
+        },
+        "SourceRegions": [
+            "SOURCE_REGIONS"
+        ],
+        "IncludeFutureRegions": true,
+        "EnableAllOpsDataSources": false
+    }
+}
+
 ```
 
 ## Invoking the solution using a State Manager association
@@ -224,26 +263,24 @@ organization.
   - **Regions**: Specify all AWS Regions (for example, us-east-1) where
     your SQL Server instances are running.
 
-  - **TargetLocationMaxConcurrency** and** TargetLocationMaxErrors:
-    Specify** these values based on the number of accounts and error
+  - **TargetLocationMaxConcurrency** and **TargetLocationMaxErrors**:
+    Specify these values based on the number of accounts and error
     thresholds described in
     [TargetLocation](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_TargetLocation.html)
     in the AWS Systems Manager API Reference.
 
 ```
 aws ssm create-association \
-    --association-name "SQLServerLicenseTrackingSolution-Association" \
-    --name "Primary-SQLServerLicenseTrackingSolution-Document" \
-    --parameters '{"AutomationAssumeRole":\["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"]}' \
-    --no-apply-only-at-cron-interval \
-    --target-locations '[{"Accounts": ["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","OU3-ID"],"Regions": ["REGION-1 like us-east-1","REGION-2"],"TargetLocationMaxConcurrency":
-"4","TargetLocationMaxErrors": "4","ExecutionRoleName":
-"SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
+    --association-name "SQLServerLicenseTrackingSolutionAssociation" \
+    --name "SetupSQLServerLicenseTrackingSolutionDocument" \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"]}' \
+    --no-apply-only-at-cron-interval \
+    --target-locations '[{"Accounts": ["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","OU3-ID"],"Regions": ["REGION-1 like us-east-1","REGION-2"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
 ```
 
-This command will invoke the system to run it once immediately after it
-is created. To update it to run on a scheduled basis using
---schedule-expression, see
+**Note:** This command will invoke the system to run it once immediately after it
+is created. To ensure that the solution can track licenses on an on-going schedule, 
+update the above command --schedule-expression, see
 [create-association](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ssm/create-association.html)
 in the AWS CLI Command Reference. 
 
@@ -253,26 +290,26 @@ in the AWS CLI Command Reference. 
 After the association has triggered the automation, open the Systems
 Manager console and from the left navigation pane, choose
 ***Automation***. In **Automation executions**, choose the most recent
-execution of the *Primary-SQLSeverLicenseTrackingSolution-Document*, as
-shown in Figure 4.
+execution of the *SetupSQLServerLicenseTrackingSolutionDocument*, as
+shown in Figure 5.
 
 ![](images/ssm-automation-execution-result.png)
-<p align="center">Figure 4: Automation executions (management account)</p>
+<p align="center">Figure 5: Automation executions (management account)</p>
 
 Depending on the number of Regions, accounts, and instances you execute
 this solution against, a successful run of the execution looks like the
 following:
 
 ![](images/ssm-automation-dashboard.png)
-<p align="center">Figure 5: Automation execution detail (management account)</p>
+<p align="center">Figure 6: Automation execution detail (management account)</p>
 
 On the details page for the execution, choose any of the **step ID**s,
-and then under **Outputs**, choose the **execution ID.** In the
-**Outputs** section, you can find the *Automation execution ID* of the
-secondary document in the member account, as shown in Figure 6.
+and then under **Outputs**, choose the **execution ID.** Under **Executed steps** 
+click on step #2 ID, you can find the *Automation execution ID* of the
+discover document in the member account, as shown in Figure 7.
 
 ![](images/execution-id.png)
-<p align="center">Figure 6: Automation outputs (management account)</p>
+<p align="center">Figure 7: Automation outputs (management account)</p>
 
 
 In the Systems Manager console, search for this ID in the member account
@@ -280,25 +317,27 @@ and Region. Choose the execution ID link to get more information about
 the execution.
 
 ![](images/member-account-ssm-dashboard.png)
-<p align="center">Figure 7: Automation executions (member account)</p>
+<p align="center">Figure 8: Automation executions (member account)</p>
 
 
 To confirm that the license utilization data has been updated in AWS
 License Manager, using the management account and selected Region, open
 the **License Manager** console. Depending on the licenses consumed, the
-**Customer managed licenses** list will look something like Figure 8:
+**Customer managed licenses** list will look something like Figure 9 in 
+each region:
 
 
 ![](images/customer-managed-licenses.png)
-<p align="center">Figure 8: Customer managed licenses</p>
+<p align="center">Figure 9: Customer managed licenses</p>
 
 
 ## Adding new accounts and Regions
 
-The solution will automatically cover any new AWS accounts that you
-provision under the OUs you specified when you created the association.
-If you create new OUs or add Regions, you will need to update the
-following solution components:
+The solution will automatically cover any new AWS accounts that you provision 
+under the OUs you specified when you created the association 
+(Note: Lambda function that shares the Discover document with member accounts 
+is invoked every day). If you create new OUs or add Regions, you will need to 
+update the following solution components:
 
 **CloudFormation**:
 
@@ -319,9 +358,8 @@ to update the current association. Specify the accounts and Regions in
 
 **Resource data sync**:
 
-Add a new resource data sync in the account and Region as described
-earlier in the post in “Centralizing Systems Manager Inventory data
-using resource data sync.”
+Refer to [update-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/update-resource-data-sync.html)
+to update the resource data sync. 
 
 ## Setup databases in Athena
 Athena will help us query the aggregated data in the centralized S3
