@@ -193,13 +193,13 @@ in the AWS Systems Manager User Guide.
 To use resource data sync, execute the following command using AWS CloudShell 
 in the management account using the following input file. For more details refer 
 to [create-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/create-resource-data-sync.html).
-Update INVENTORY-BUCKET_NAME, BUCKET-REGION, OU-ID (Target OUs) and SOURCE_REGIONS (Target Regions) 
-in the input.json.
 
 ```
 aws ssm create-resource-data-sync --cli-input-json file://input.json
 ```
 
+Update INVENTORY-BUCKET_NAME, BUCKET-REGION, OU-ID (Target OUs) and SOURCE_REGIONS (Target Regions) 
+in the json file.
 **input.json**
 ```
 {
@@ -264,7 +264,7 @@ aws ssm create-association \
 
 **Note:** This command will invoke the system to run it once immediately after it
 is created. To ensure that the solution can track licenses on an on-going schedule, 
-update the above command --schedule-expression, see
+update the above command using --schedule-expression, see
 [create-association](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ssm/create-association.html)
 in the AWS CLI Command Reference. 
 
@@ -340,10 +340,8 @@ Use
 to update the current association. Specify the accounts and Regions in
 --target-locations.
 
-**Resource data sync**:
-
-Refer to [update-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/update-resource-data-sync.html)
-to update the resource data sync. 
+**Resource data sync**
+To update the resource data sync in the management account with new OUs/regions refer to [update-resource-data-sync](https://docs.aws.amazon.com/cli/latest/reference/ssm/update-resource-data-sync.html).
 
 ## Setup databases in Athena
 Athena will help us query the aggregated data in the centralized S3
