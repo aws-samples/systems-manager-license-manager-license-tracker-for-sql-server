@@ -41,7 +41,6 @@ Parameters:
   ManagementAccountId:
     Description: (Required) AWS Organization's Management account ID.
     Type: String
-    Default: '784315950497'
   TargetKey:
     Type: String
     Description: Specify which instances have to be targeted for this solution. Allowed values - ParameterValues, ResourceGroup or begin with tag:, AWS::EC2::Instance, InstanceIds (default), instanceids. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_Target.html for more details.
@@ -51,25 +50,21 @@ Parameters:
     Description: Specify the values of the target keys specified above. Default is *, which targets all instances. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_Target.html for more details.
     Default: 'true'
   OrganizationId:
-    Description: AWS Organization ID.
+    Description: (Required) AWS Organization ID.
     Type: String
-    Default: 'o-se74hgblvn'
     AllowedPattern: '^[o]+(-[a-z0-9]+)*$'
     ConstraintDescription: Provide a valid Organization ID (for eg. o-abc5drtefg)
   InventoryBucketName:
-    Description: Name for the S3 bucket that will be used to aggregate the Inventory data.
+    Description: (Required) Name for the S3 bucket that will be used to aggregate the Inventory data.
     Type: String
-    Default: 'bhatprav-olts-inv'
     AllowedPattern: '^[a-z]+(-[a-z]+)*$'
     ConstraintDescription: Provide a valid name for S3 bucket
   DeploymentTargets:
     Description: Specify AWS account IDs and/or the organizational unit IDs within AWS Organization whose accounts have the target instances (e.g., ou-abcd-1qwert43, 123456789123)
     Type: CommaDelimitedList
-    Default: ou-lkal-dnbq6y41
   TargetRegions:
     Type: CommaDelimitedList
     Description: Specify all AWS Regions which needs to be managed by this solution"
-    Default: ap-southeast-2,us-east-1
 
 Conditions:
   IsGovCloud: 
@@ -404,6 +399,7 @@ Resources:
             ]
           }
       DocumentType: "Automation"
+      TargetType: "/AWS::EC2::Instance"
 
   DiscoverSQLServerLicenseTrackingSolutionDocumentStackSet:
     Type: AWS::CloudFormation::StackSet
@@ -596,6 +592,7 @@ Resources:
                   ]
                 }
               DocumentType: "Automation"
+              TargetType: "/AWS::EC2::Instance"
   
   ModifySQLServerLTSDiscoverDocumentPermissionFunctionRole:
     Type: 'AWS::IAM::Role'
