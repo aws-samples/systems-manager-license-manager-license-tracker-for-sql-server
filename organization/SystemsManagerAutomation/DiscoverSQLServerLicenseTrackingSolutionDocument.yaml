@@ -1,12 +1,13 @@
-description: Secondary document for SQL License Tracking Solution
+description: Document to discover SQL Server for License Tracking Solution
 schemaVersion: '0.3'
 assumeRole: '{{ AutomationAssumeRole }}'
 parameters:
   InstanceId:
     description: (Required) Use * to target all instances in this account or you can specify an individual instance ID
     type: StringList
-    default: ["*"]
-    allowedPattern : '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
+    default:
+      - '*'
+    allowedPattern: '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
   AutomationAssumeRole:
     type: String
     description: The IAM role required to execute this document

@@ -1,28 +1,10 @@
-description: Setup document for SQL License Tracking Solution
+description: Setup document for SQL Server License Tracking Solution
 schemaVersion: '0.3'
 assumeRole: '{{ AutomationAssumeRole }}'
 parameters:
-  TargetKey:
-    type: String
-    default: 'tag:SQLServerLTS-ManagedInstance'
-    description: '(Optional) Specify the instances you want to target using Resource Groups, tags (use tag: format) or all instances with InstanceIds. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html for more details.'
-  TargetValues:
-    type: String
-    default: 'true'
-    description: '(Optional) Specify the values you want to target like tag value or * for all instances. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html for more details.'
   AutomationAssumeRole:
     type: String
-    description: The IAM role required to execute this document (select SQLServerLTS-SystemsManager-AutomationAdministrationRole from the drop-down if you deployed this solution using CloudFormation)
-  DocumentName:
-    type: String
-    description: (required) Document ARN of DiscoverSQLServerLicenseTrackingSolutionDocument
-    default: 'arn:aws:ssm:{{global:REGION}}:784315950497:document/DiscoverSQLServerLicenseTrackingSolutionDocument'
-  MaxConcurrency:
-    type: String
-    default: '4'
-  MaxErrors:
-    type: String
-    default: '4'
+    description: The IAM role required to execute this document (select SQLServerLTS-SystemsManagerAutomationAdministrationRole from the drop-down if you deployed this solution using CloudFormation)
 mainSteps:
   - name: deleteCustomInventory
     description: 'This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances.'
@@ -71,65 +53,6 @@ mainSteps:
             status = "Custom:SQLServer type doesn't exist in the Inventory so continuing to the next step."
             
           return {'message': status}
-    outputs:
-      - Name: result
-        Selector: $.Payload.message
-        Type: String
-    isCritical: true
-    onFailure: Abort
-    nextStep: invokeDiscoverSQLServerLicenseTrackingSolutionAutomation
-  - name: invokeDiscoverSQLServerLicenseTrackingSolutionAutomation
-    description: This step invokes the DiscoverSQLServerLicenseTrackingSolutionDocument Automation
-    action: 'aws:executeScript'
-    inputs:
-      Runtime: python3.7
-      Handler: script_handler
-      Script: |-
-        import sys
-        import boto3
-        import json
-        import botocore
-
-        def script_handler(events, context):
-          client = boto3.client('ssm')
-          targetKey = events['targetKey']
-          targetValues = events['targetValues']
-          automationAssumeRole = events['automationAssumeRole']
-          documentName = events['documentName']
-          
-          response = client.start_automation_execution(
-            DocumentName=documentName,
-            Parameters={
-                'InstanceId': [
-                    '*'
-                ],
-                'AutomationAssumeRole': [
-                    automationAssumeRole
-                ]
-            },
-            TargetParameterName='InstanceId',
-            Targets=[
-              {
-                  'Key': targetKey,
-                  'Values': [
-                      targetValues
-                  ]
-              }
-            ]
-          )
-          
-          if response["AutomationExecutionId"]:
-            status = "DiscoverSQLServerLicenseTrackingSolutionDocument has been successfuly invoked. Check AutomationExecutionId - " + response["AutomationExecutionId"] + " for more details"
-          else:
-            status = "DiscoverSQLServerLicenseTrackingSolutionDocument was not invoked"
-            raise Exception(f"It appears that this step couldn't be completed due to an unknown error. Please check the logs for more details") 
-          
-          return {'message': status}
-      InputPayload:
-        targetKey: '{{ TargetKey }}'
-        targetValues: '{{ TargetValues }}'
-        automationAssumeRole: '{{ AutomationAssumeRole }}'
-        documentName: '{{ DocumentName }}'
     outputs:
       - Name: result
         Selector: $.Payload.message
