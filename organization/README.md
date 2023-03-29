@@ -222,7 +222,7 @@ In Automation executions, you should see the status of SQLServerLTS-Orchestrate 
 ![](images/ssm-automation-execution-result.png)
 <p align="center">Figure 4: Automation executions (management account)</p>
 
-For more details on the status of individual instances, you can click on the Execution ID of SQLServerLTS-ManageLicenceUtilization and navigate to the instance of interest, as shown in the figure below.
+For more details on the status of individual instances, you can click on the Step ID of SQLServerLTS-ManageLicenceUtilization and navigate to the instance of interest, as shown in the figure below.
 
 ![](images/ssm-automation-dashboard.png)
 <p align="center">Figure 5: Automation execution detail (management account)</p>
