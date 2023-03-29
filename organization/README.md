@@ -51,12 +51,8 @@ an organization, **complete** these steps.
 
     Once completed, under the Settings section you should see a link to the new Resource Share ARN ([AWS Resource Access Manager (AWS RAM)](https://aws.amazon.com/ram/)), as shown in  Figure 1.
 
-
-    Once completed, under the Settings section you should see a link to the new Resource Share ARN (Resource Access Manager), 
-    as shown in Figure 2.
-
 ![](images/lm-settings-wth-resourceshare.png)
-<p align="center">Figure 2: License Manager Settings with resource share ARN</p>
+<p align="center">Figure 1: License Manager Settings with resource share ARN</p>
     
 
   - **Create license configurations.** In AWS License Manager, create
@@ -93,11 +89,11 @@ an organization, **complete** these steps.
 <p align="center">Figure 2: Shared principals and resources in the AWS Resource Access Manager console</p>
 
   - **Manage instances using Systems Manager.** 
-    A managed instance is an Amazon EC2 instance that is configured for use with Systems Manager. 
+    A [managed instance](https://docs.aws.amazon.com/systems-manager/latest/userguide/managed_instances.html) is an Amazon EC2 instance that is configured for use with Systems Manager. 
     Managed instances can use Systems Manager services such as Run Command, Patch Manager, and Session 
     Manager. You must make sure that all instances targeted for this solution meet the prerequisites to 
     become a managed instance including configuring instance permissions for Systems Manager as described 
-    in Setting up Systems Manager for EC2 instances.
+    in [Setting up Systems Manager for EC2 instances](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-permissions.html).
 
 # Solution overview
 
@@ -129,25 +125,25 @@ capabilities:
 <p align="center">Figure 3: Solution architecture</p>
 
 
-    1. Invoke the SQLServerLTS-Orchestrate Automation: State Manager invokes the SQLServerLTS-Orchestrate Automation and passes the required parameters using which the solution determines the target Organizational Unit IDs/AWS accounts and Regions where your SQL database instances are deployed.
+  1. Invoke the SQLServerLTS-Orchestrate Automation: State Manager invokes the SQLServerLTS-Orchestrate Automation and passes the required parameters using which the solution determines the target Organizational Unit IDs/AWS accounts and Regions where your SQL database instances are deployed.
 
-    2. Remove old custom Inventory data: In this step, the Orchestrate Automation first invokes the SQLServerLTS-DeleteInventory Automation in the target member account to remove the old custom Inventory schema in Systems Manager Inventory, making sure that Inventory data is current. Inventory data comprises of Oracle database editions and all the packs installed and/or used.
-    
-    3. Invoke the SQLServerLTS-ManageLicenceUtilization Automation: Once the deletion has been completed, the SQLServerLTS-Orchestrate Automation invokes the SQLServerLTS-ManageLicenceUtilization Automation to initiate the discovery of Oracle databases in your account and track their utilization for license management.
-    
-    4. Remove old License Manager data: The Automation first disassociates the target instance from an existing License Configuration. This makes sure that the latest discovered licenses are available in License Manager for scenarios where changes have been made on the instance. For example, somebody deletes or installs a new edition of Oracle database on the target instance after the previous Automation run.
-    
-    5. Discovery: The Discover Automation then targets instances based on the State Manager association definition to determine the type of Oracle database running, and stores this data in the artifacts bucket under ssm-output. Instances can be targeted using ParameterValues, ResourceGroup or with tag: (default), AWS::EC2::Instance, InstanceIds, instanceids. Refer the API reference for Target for more details.
+  2. Remove old custom Inventory data: In this step, the Orchestrate Automation first invokes the SQLServerLTS-DeleteInventory Automation in the target member account to remove the old custom Inventory schema in Systems Manager Inventory, making sure that Inventory data is current. Inventory data comprises of Oracle database editions and all the packs installed and/or used.
+  
+  3. Invoke the SQLServerLTS-ManageLicenceUtilization Automation: Once the deletion has been completed, the SQLServerLTS-Orchestrate Automation invokes the SQLServerLTS-ManageLicenceUtilization Automation to initiate the discovery of Oracle databases in your account and track their utilization for license management.
+  
+  4. Remove old License Manager data: The Automation first disassociates the target instance from an existing License Configuration. This makes sure that the latest discovered licenses are available in License Manager for scenarios where changes have been made on the instance. For example, somebody deletes or installs a new edition of Oracle database on the target instance after the previous Automation run.
+  
+  5. Discovery: The Discover Automation then targets instances based on the State Manager association definition to determine the type of Oracle database running, and stores this data in the artifacts bucket under ssm-output. Instances can be targeted using ParameterValues, ResourceGroup or with tag: (default), AWS::EC2::Instance, InstanceIds, instanceids. Refer the API reference for Target for more details.
 
-    6. Update Inventory: The discovered data is used to update the Systems Manager Inventory. In this step, Automation creates two new custom schemas along with the metadata to store the Oracle edition details along with the management packs.
-    
-    7. Update License Manager: Finally, the Automation updates the License Manager with the license utilization data and associates the target instance with the appropriate license specification that has been defined in License Manager. Discovered data under ssm-output is cleared for the next run.
+  6. Update Inventory: The discovered data is used to update the Systems Manager Inventory. In this step, Automation creates two new custom schemas along with the metadata to store the Oracle edition details along with the management packs.
+  
+  7. Update License Manager: Finally, the Automation updates the License Manager with the license utilization data and associates the target instance with the appropriate license specification that has been defined in License Manager. Discovered data under ssm-output is cleared for the next run.
 
-    8. Aggregate Inventory data using resource data sync: Systems Manager resource data sync sends the Inventory data collected from all your managed instances across the member accounts to a single Amazon Simple Storage Service (Amazon S3) bucket. Then, resource data sync automatically updates the centralized data when new Inventory data is collected. 
+  8. Aggregate Inventory data using resource data sync: Systems Manager resource data sync sends the Inventory data collected from all your managed instances across the member accounts to a single Amazon Simple Storage Service (Amazon S3) bucket. Then, resource data sync automatically updates the centralized data when new Inventory data is collected. 
 
-    9. Query the centralized Inventory data: You can use Amazon Athena which provides an interactive query service to analyze the Inventory data in Amazon S3 using standard SQL.
-    
-    10. Visualize Inventory data: With Amazon QuickSight you can create and publish interactive BI dashboards with insights powered by machine learning (ML).
+  9. Query the centralized Inventory data: You can use Amazon Athena which provides an interactive query service to analyze the Inventory data in Amazon S3 using standard SQL.
+  
+  10. Visualize Inventory data: With Amazon QuickSight you can create and publish interactive BI dashboards with insights powered by machine learning (ML).
 
 
 # Walkthrough
