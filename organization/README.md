@@ -125,25 +125,25 @@ capabilities:
 <p align="center">Figure 3: Solution architecture</p>
 
 
-  1. Invoke the SQLServerLTS-Orchestrate Automation: State Manager invokes the SQLServerLTS-Orchestrate Automation and passes the required parameters using which the solution determines the target Organizational Unit IDs/AWS accounts and Regions where your SQL database instances are deployed.
+  1. **Invoke the SQLServerLTS-Orchestrate Automation**: State Manager invokes the SQLServerLTS-Orchestrate Automation and passes the required parameters using which the solution determines the target Organizational Unit IDs/AWS accounts and Regions where your SQL database instances are deployed.
 
-  2. Remove old custom Inventory data: In this step, the Orchestrate Automation first invokes the SQLServerLTS-DeleteInventory Automation in the target member account to remove the old custom Inventory schema in Systems Manager Inventory, making sure that Inventory data is current. Inventory data comprises of Oracle database editions and all the packs installed and/or used.
+  2. **Remove old custom Inventory data**: In this step, the Orchestrate Automation first invokes the SQLServerLTS-DeleteInventory Automation in the target member account to remove the old custom Inventory schema in Systems Manager Inventory, making sure that Inventory data is current. Inventory data comprises of Oracle database editions and all the packs installed and/or used.
   
-  3. Invoke the SQLServerLTS-ManageLicenceUtilization Automation: Once the deletion has been completed, the SQLServerLTS-Orchestrate Automation invokes the SQLServerLTS-ManageLicenceUtilization Automation to initiate the discovery of Oracle databases in your account and track their utilization for license management.
+  3. **Invoke the SQLServerLTS-ManageLicenceUtilization Automation**: Once the deletion has been completed, the SQLServerLTS-Orchestrate Automation invokes the SQLServerLTS-ManageLicenceUtilization Automation to initiate the discovery of Oracle databases in your account and track their utilization for license management.
   
-  4. Remove old License Manager data: The Automation first disassociates the target instance from an existing License Configuration. This makes sure that the latest discovered licenses are available in License Manager for scenarios where changes have been made on the instance. For example, somebody deletes or installs a new edition of Oracle database on the target instance after the previous Automation run.
+  4. **Remove old License Manager data**: The Automation first disassociates the target instance from an existing License Configuration. This makes sure that the latest discovered licenses are available in License Manager for scenarios where changes have been made on the instance. For example, somebody deletes or installs a new edition of Oracle database on the target instance after the previous Automation run.
   
-  5. Discovery: The Discover Automation then targets instances based on the State Manager association definition to determine the type of Oracle database running, and stores this data in the artifacts bucket under ssm-output. Instances can be targeted using ParameterValues, ResourceGroup or with tag: (default), AWS::EC2::Instance, InstanceIds, instanceids. Refer the API reference for Target for more details.
+  5. **Discovery**: The Discover Automation then targets instances based on the State Manager association definition to determine the type of Oracle database running, and stores this data in the artifacts bucket under ssm-output. Instances can be targeted using ParameterValues, ResourceGroup or with tag: (default), AWS::EC2::Instance, InstanceIds, instanceids. Refer the API reference for Target for more details.
 
-  6. Update Inventory: The discovered data is used to update the Systems Manager Inventory. In this step, Automation creates two new custom schemas along with the metadata to store the Oracle edition details along with the management packs.
+  6. **Update Inventory**: The discovered data is used to update the Systems Manager Inventory. In this step, Automation creates two new custom schemas along with the metadata to store the Oracle edition details along with the management packs.
   
-  7. Update License Manager: Finally, the Automation updates the License Manager with the license utilization data and associates the target instance with the appropriate license specification that has been defined in License Manager. Discovered data under ssm-output is cleared for the next run.
+  7. **Update License Manager**: Finally, the Automation updates the License Manager with the license utilization data and associates the target instance with the appropriate license specification that has been defined in License Manager. Discovered data under ssm-output is cleared for the next run.
 
-  8. Aggregate Inventory data using resource data sync: Systems Manager resource data sync sends the Inventory data collected from all your managed instances across the member accounts to a single Amazon Simple Storage Service (Amazon S3) bucket. Then, resource data sync automatically updates the centralized data when new Inventory data is collected. 
+  8. **Aggregate Inventory data using resource data sync**: Systems Manager resource data sync sends the Inventory data collected from all your managed instances across the member accounts to a single Amazon Simple Storage Service (Amazon S3) bucket. Then, resource data sync automatically updates the centralized data when new Inventory data is collected. 
 
-  9. Query the centralized Inventory data: You can use Amazon Athena which provides an interactive query service to analyze the Inventory data in Amazon S3 using standard SQL.
+  9. **Query the centralized Inventory data**: You can use Amazon Athena which provides an interactive query service to analyze the Inventory data in Amazon S3 using standard SQL.
   
-  10. Visualize Inventory data: With Amazon QuickSight you can create and publish interactive BI dashboards with insights powered by machine learning (ML).
+  10. **Visualize Inventory data**: With Amazon QuickSight you can create and publish interactive BI dashboards with insights powered by machine learning (ML).
 
 
 # Walkthrough
@@ -186,8 +186,7 @@ into a single S3 bucket, making the bucket an inventory data lake for
 multiple AWS accounts. You can then use the data lake for advanced
 queries and analysis of inventory data across multiple accounts. 
 
-Refer to the instructions under Create an inventory 
-resource data sync for accounts defined in AWS Organizations in [Use resource 
+Refer to the instructions in [Use resource 
 data sync to aggregate inventory data](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-resource-data-sync.html) 
 to create resource data syncs for your member accounts.
 
@@ -195,10 +194,10 @@ to create resource data syncs for your member accounts.
 
 Use the following AWS Command Line Interface (AWS CLI) command to create an association. Update the highlighted parameters and then run this command in the management or root account of your organization.
 
-    - **AutomationAssumeRole**: Specify your management account ID for the AutomationAssumeRole ARN.
-    - DeploymentTargets: Enter the organizational unit IDs (for example, ou-abcd-1qwert43), AWS account IDs, or a combination of both.
-    - TargetRegions: Specify all of the AWS Regions (for example, us-east-1) where your Oracle databases are running.
-    - MaxConcurrency and MaxErrors: Specify these values based on the number of accounts and error thresholds described in [StartAutomationExecution](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html#systemsmanager-StartAutomationExecution-request-MaxConcurrency) in the Systems Manager API Reference.
+  - **AutomationAssumeRole**: Specify your management account ID for the AutomationAssumeRole ARN.
+  - **DeploymentTargets**: Enter the organizational unit IDs (for example, ou-abcd-1qwert43), AWS account IDs, or a combination of both.
+  - **TargetRegions**: Specify all of the AWS Regions (for example, us-east-1) where your Oracle databases are running.
+  - **MaxConcurrency** and **MaxErrors**: Specify these values based on the number of accounts and error thresholds described in [StartAutomationExecution](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html#systemsmanager-StartAutomationExecution-request-MaxConcurrency) in the Systems Manager API Reference.
 
 ```
 aws ssm create-association \
@@ -217,48 +216,27 @@ in the AWS CLI Command Reference. 
 
 ### Validating the execution ran successfully
 
-After the association has triggered the automation, open the Systems
-Manager console and from the left navigation pane, choose
-***Automation***. In **Automation executions**, choose the most recent
-execution of the *SetupSQLServerLicenseTrackingSolutionDocument*, as
-shown in Figure 4.
+After the association has triggered the Automation, open the Systems Manager console in the management account, and from the left navigation pane choose Automation. 
+In Automation executions, you should see the status of SQLServerLTS-Orchestrate along with SQLServerLTS-DeleteInventory and SQLServerLTS-ManageLicenceUtilization, as shown in the following figure.
 
 ![](images/ssm-automation-execution-result.png)
 <p align="center">Figure 4: Automation executions (management account)</p>
 
-Depending on the number of Regions, accounts, and instances you execute
-this solution against, a successful run of the execution looks like the
-following:
+For more details on the status of individual instances, you can click on the Execution ID of SQLServerLTS-ManageLicenceUtilization and navigate to the instance of interest, as shown in the figure below.
 
 ![](images/ssm-automation-dashboard.png)
 <p align="center">Figure 5: Automation execution detail (management account)</p>
-
-On the details page for the execution, choose any of the **step ID**s,
-and then under **Outputs**, choose the **execution ID.** Under **Executed steps** 
-click on step #2 ID, you can find the *Automation execution ID* of the
-discover document in the member account, as shown in Figure 6.
-
-![](images/execution-id.png)
-<p align="center">Figure 6: Automation outputs (management account)</p>
-
-
-In the Systems Manager console, search for this ID in the member account
-and Region. Choose the execution ID link to get more information about
-the execution.
-
-![](images/member-account-ssm-dashboard.png)
-<p align="center">Figure 7: Automation executions (member account)</p>
 
 
 To confirm that the license utilization data has been updated in AWS
 License Manager, using the management account and selected Region, open
 the **License Manager** console. Depending on the licenses consumed, the
-**Customer managed licenses** list will look something like Figure 8 in 
+**Customer managed licenses** list will look something like Figure 6 in 
 each region:
 
 
 ![](images/customer-managed-licenses.png)
-<p align="center">Figure 8: Customer managed licenses</p>
+<p align="center">Figure 6: Customer managed licenses</p>
 
 
 ## Adding new accounts and Regions
@@ -423,30 +401,30 @@ Athena.
     then choose **Edit/Preview data**.
 
 ![](images/dataset-in-quicksight.png)
-<p align="center">Figure 9: Creating a dataset in QuickSight</p>
+<p align="center">Figure 7: Creating a dataset in QuickSight</p>
 
 
 2.  In the editor view, choose **Add data**, and then select the other
-    tables as shown in Figure 3.
+    tables as shown in Figure 8.
 
 ![](images/quicksight-data-editor.png)
-<p align="center">Figure 10: QuickSight dataset editor</p>
+<p align="center">Figure 8: QuickSight dataset editor</p>
 
 
 3.  Update the join configuration using **resourceid** as the join
-    clause, as shown in Figure 4.
+    clause, as shown in Figure 9.
 
 ![](images/quicksight-data-editor.png)
-<p align="center">Figure 11: Specifying the join configuration</p>
+<p align="center">Figure 9: Specifying the join configuration</p>
 
 4.  Before you apply the changes, exclude all duplicate fields and
-    update the data types as shown in Figure 5. 
+    update the data types as shown in Figure 10. 
 
 ![](images/excluded-fields.png)
-<p align="center">Figure 12: Excluded fields</p>
+<p align="center">Figure 10: Excluded fields</p>
 
 You can use the dataset you just created to build your own analysis and
-create visualizations as shown in Figure 6. To stay informed about
+create visualizations as shown in Figure 11. To stay informed about
 important changes in your data, you can create threshold alerts using
 KPI and Gauge visuals in an Amazon QuickSight dashboard. For
 information, see [Working with Threshold Alerts in Amazon QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/threshold-alerts.html).
@@ -454,7 +432,7 @@ With these alerts, you can set thresholds for your data and be notified
 by email when your data crosses them. 
 
 ![](images/quicksight-analysis.png )
-<p align="center">Figure 13: QuickSight analysis</p>
+<p align="center">Figure 11: QuickSight analysis</p>
 
 
 # Conclusion
