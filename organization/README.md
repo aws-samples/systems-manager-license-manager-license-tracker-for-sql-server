@@ -66,15 +66,11 @@ an organization, **complete** these steps.
     for r in {REGION-1,REGION-2}; do for i in { SQLServerEELicenseConfiguration, SQLServerSTDLicenseConfiguration, SQLServerDEVLicenseConfiguration, SQLServerWEBLicenseConfiguration, SQLServerEXPLicenseConfiguration};  do aws license-manager create-license-configuration --name "$i" --license-counting-type vCPU --region $r; done; done
     ```
 
-    - SQLServerEELicenseConfiguration for Enterprise Edition
-
-    - SQLServerSTDLicenseConfiguration for Standard Edition
-
-    - SQLServerDEVLicenseConfiguration for Developer Edition
-
-    - SQLServerWEBLicenseConfiguration for Web Edition
-
-    - SQLServerEXPLicenseConfiguration for Express Edition
+    - *SQLServerEELicenseConfiguration* for Enterprise Edition
+    - *SQLServerSTDLicenseConfiguration* for Standard Edition
+    - *SQLServerDEVLicenseConfiguration* for Developer Edition
+    - *SQLServerWEBLicenseConfiguration* for Web Edition
+    - *SQLServerEXPLicenseConfiguration* for Express Edition
 
   - **Share license configurations.** After you have defined your
     configurations, use AWS Organizations or AWS Resource Access Manager
@@ -222,7 +218,7 @@ In Automation executions, you should see the status of SQLServerLTS-Orchestrate 
 ![](images/ssm-automation-execution-result.png)
 <p align="center">Figure 4: Automation executions (management account)</p>
 
-For more details on the status of individual instances, you can click on the Step ID of SQLServerLTS-ManageLicenceUtilization and navigate to the instance of interest, as shown in the figure below.
+For more details on the status of individual instances, you can click on the Step ID of SQLServerLTS-ManageLicenceUtilization associated for the AWS account hosting the instance and navigate to the instance of interest, as shown in the figure below.
 
 ![](images/ssm-automation-dashboard.png)
 <p align="center">Figure 5: Automation execution detail (management account)</p>
