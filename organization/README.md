@@ -34,22 +34,23 @@ blog post.
 # Prerequisites
 
 To deploy this solution across multiple Regions and/or accounts in 
-an organization, **complete** these steps.  
-
+an organization, **complete** these steps. 
+  
   - **Enable trusted access with AWS Organizations for CloudFormation.** 
     Complete the following tasks as described in [Enable trusted access 
     with AWS Organizations](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-enable-trusted-access.html)
     - Enable all features in AWS Organizations. With only consolidated billing features enabled, you cannot create a stack set with service-managed permissions.  
     - Enable trusted access with AWS Organizations. After trusted access is enabled, StackSets creates the necessary IAM roles in the organization's management account and target (member) accounts when you create stack sets with service-managed permissions.
+  
+  - **Using a delegated administrator.** 
+  This solution uses the management account within AWS Organizations, but you can also designate an account (delegated administrator) 
+  to manage this on behalf of the organization. If you intend to use a delegated account then you will need to register it as delegated administrator for CloudFormation stack set operations as described in [Register a delegated administrator](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html).
 
-  - **Link License Manager to AWS Organizations in all targer Regions.** 
-    To share license configurations with member accounts you will need to link 
-    License Manager to AWS Organizations.
+  - **Distributing license configurations with member accounts in all target regions.** 
+    To distribute self-managed licenses within your organization, from the License Manager console of the organization’s management account, choose Settings, and then select Link AWS Organizations accounts. When you select this option, we add a service-linked role to the management and member accounts. Repeat this step for all target regions. If you intend to use delegated administrator account, then from the License Manager console of the organization’s management account, choose Settings, and under Delegated administrator, choose Delegate administrator. Enter the account ID number for the AWS account that you want to assign, and then choose Delegate. You can’t use the ID for the management account. It must be a member account.
 
-    In the AWS License Manager console, choose **Settings**, and then select **Link AWS Organizations accounts**, as shown in Figure 1. 
+    Once completed, under the Settings section you should see a link to the new Resource Share ARN ([AWS Resource Access Manager (AWS RAM)](https://aws.amazon.com/ram/)), as shown in  Figure 1.
 
-![](images/lm-link-organization.png)
-<p align="center">Figure 1: Linking AWS Organizations accounts in the License Manager console</p>
 
     Once completed, under the Settings section you should see a link to the new Resource Share ARN (Resource Access Manager), 
     as shown in Figure 2.
@@ -80,7 +81,7 @@ an organization, **complete** these steps.  
     - SQLServerEXPLicenseConfiguration for Express Edition
 
   - **Share license configurations.** After you have defined your
-    configurations, use AWS Organizations or AWS Resource Access Manager
+    configurations, use AWS Organizations or AWS Resource Access Manager
     to share license configurations. For instructions, see the [Tracking
     software usage across multiple AWS accounts using AWS License
     Manager](https://aws.amazon.com/blogs/mt/tracking-software-usage-across-multiple-aws-accounts-using-aws-license-manager/) blog
@@ -89,7 +90,14 @@ an organization, **complete** these steps.  
     After you share your principals (accounts) and resources (license configurations), you should see them in the AWS Resource Access Manager console:
 
 ![](images/ram-lm-shared.png)
-<p align="center">Figure 3: Shared principals and resources in the AWS Resource Access Manager console</p>
+<p align="center">Figure 2: Shared principals and resources in the AWS Resource Access Manager console</p>
+
+  - **Manage instances using Systems Manager.** 
+    A managed instance is an Amazon EC2 instance that is configured for use with Systems Manager. 
+    Managed instances can use Systems Manager services such as Run Command, Patch Manager, and Session 
+    Manager. You must make sure that all instances targeted for this solution meet the prerequisites to 
+    become a managed instance including configuring instance permissions for Systems Manager as described 
+    in Setting up Systems Manager for EC2 instances.
 
 # Solution overview
 
@@ -102,7 +110,7 @@ The solution described in this blog post enhances the auto-discovery
 capability and provides license edition details for instances deployed
 across AWS Regions and accounts in AWS Organizations.
 
-Figure 4 shows the solution architecture. In addition to AWS License
+Figure 3 shows the solution architecture. In addition to AWS License
 Manager, the solution uses the following Systems Manager features and
 capabilities:
 
@@ -118,7 +126,28 @@ capabilities:
     SQL Server editions running on them.
 
 ![](images/solution-arch.png )
-<p align="center">Figure 4: Solution architecture</p>
+<p align="center">Figure 3: Solution architecture</p>
+
+
+    1. Invoke the SQLServerLTS-Orchestrate Automation: State Manager invokes the SQLServerLTS-Orchestrate Automation and passes the required parameters using which the solution determines the target Organizational Unit IDs/AWS accounts and Regions where your SQL database instances are deployed.
+
+    2. Remove old custom Inventory data: In this step, the Orchestrate Automation first invokes the SQLServerLTS-DeleteInventory Automation in the target member account to remove the old custom Inventory schema in Systems Manager Inventory, making sure that Inventory data is current. Inventory data comprises of Oracle database editions and all the packs installed and/or used.
+    
+    3. Invoke the SQLServerLTS-ManageLicenceUtilization Automation: Once the deletion has been completed, the SQLServerLTS-Orchestrate Automation invokes the SQLServerLTS-ManageLicenceUtilization Automation to initiate the discovery of Oracle databases in your account and track their utilization for license management.
+    
+    4. Remove old License Manager data: The Automation first disassociates the target instance from an existing License Configuration. This makes sure that the latest discovered licenses are available in License Manager for scenarios where changes have been made on the instance. For example, somebody deletes or installs a new edition of Oracle database on the target instance after the previous Automation run.
+    
+    5. Discovery: The Discover Automation then targets instances based on the State Manager association definition to determine the type of Oracle database running, and stores this data in the artifacts bucket under ssm-output. Instances can be targeted using ParameterValues, ResourceGroup or with tag: (default), AWS::EC2::Instance, InstanceIds, instanceids. Refer the API reference for Target for more details.
+
+    6. Update Inventory: The discovered data is used to update the Systems Manager Inventory. In this step, Automation creates two new custom schemas along with the metadata to store the Oracle edition details along with the management packs.
+    
+    7. Update License Manager: Finally, the Automation updates the License Manager with the license utilization data and associates the target instance with the appropriate license specification that has been defined in License Manager. Discovered data under ssm-output is cleared for the next run.
+
+    8. Aggregate Inventory data using resource data sync: Systems Manager resource data sync sends the Inventory data collected from all your managed instances across the member accounts to a single Amazon Simple Storage Service (Amazon S3) bucket. Then, resource data sync automatically updates the centralized data when new Inventory data is collected. 
+
+    9. Query the centralized Inventory data: You can use Amazon Athena which provides an interactive query service to analyze the Inventory data in Amazon S3 using standard SQL.
+    
+    10. Visualize Inventory data: With Amazon QuickSight you can create and publish interactive BI dashboards with insights powered by machine learning (ML).
 
 
 # Walkthrough
@@ -126,54 +155,28 @@ capabilities:
 [![cfn-stack](images/cfn-stack.png)]((https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=SQLServer-LTS&templateURL=https://bhatprav-blog-artefacts.s3.ap-southeast-2.amazonaws.com/sql-server-lts/template.yaml))
 
 To deploy the solution, launch this CloudFormation template in the
-management account of your organization.  
+management account of your organization. 
 
 This template deploys the following resources:
 
 1.  **Systems Manager documents**
     
-      - The setup Automation document (SetupSQLServerLicenseTrackingSolutionDocument) includes the logic to execute steps 1 and 2 of the walkthrough.
-    
-      - The secondary Automation document (DiscoverSQLServerLicenseTrackingSolutionDocument) includes the logic to execute steps 3-8 of the walkthrough.
+      - SQLServerLTS-Orchestrate includes the logic to run step 1 and 3 of the walk-through.
+      - SQLServerLTS-DeleteInventory includes the logic to run step 2 of the walk-through.
+      - SQLServerLTS-ManageLicenceUtilization includes the logic to run steps 4-7 of the walk-through.
+
 
 2.  **All the IAM roles required to deploy the solution**
     
-    - Automation administration role (for the administration of the Automation documents)
-        
-    - Automation execution role (for the execution of the Automation documents)
-    
-    - CloudFormation StackSets administration role (to deploy the solution across multiple accounts and Regions)
-    
-    - CloudFormation StackSets execution role (to deploy the solution across multiple accounts and Regions)
-    
-    - Lambda execution role (for the execution of the ModifySQLServerLTSDiscoverDocumentPermission Lambda function)
+    - SQLServerLTS-SystemsManager-AutomationAdministrationRole, for the administration of the Automation documents.
+    - SQLServerLTS-SystemsManager-AutomationExecutionRole, which is deployed using StackSets across all the target accounts and regions for the execution of the Automation documents
+    - SQLServerLTS-CloudFormation-StackSetAdministrationRole, to deploy the solution across multiple accounts and Regions using CloudFormation Stacksets
+    - SQLServerLTS-CloudFormation-StackSetExecutionRole, to deploy the solution across multiple accounts and Regions using CloudFormation Stacksets.
 
 3.  **S3 bucket**
 
-    This central bucket in the management account stores all the data from resource data syncs across the accounts, as shown in step 8 of Figure 4.
+    This central bucket in the management or delegated admin account stores all the data from resource data syncs across the accounts, as shown in step 8 of Figure 3.
 
-4.  **Lambda**
-    
-      - The ModifySQLServerLTSDiscoverDocumentPermission function is
-        used to maintain permissions of the Discover Automation
-        document with the accounts in the organization.
-    
-      - A [trigger to
-        schedule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html)
-        the execution of the Lambda function to run once every 30 days
-        using [Amazon EventBridge](https://aws.amazon.com/eventbridge/)
-        to ensure that the secondary document is shared with the latest
-        set of accounts.
-    
-Once your template has been deployed, using AWS CloudShell 
-invoke the lambda function to share the Discover document with all the members
-accounts within the organization. Replace REGION with your target regions:
-
-```
-for i in {REGION-1,REGION-2}; do aws lambda invoke --function-name ModifySQLServerLTSDiscoverDocumentPermission output.txt --region $i; done
-```
-
-**Note**: The lambda function is scheduled to run every day so all subsequent invocations will be performed automatically.
 
 ## Centralizing Systems Manager Inventory data using resource data sync
 
@@ -194,33 +197,19 @@ to create resource data syncs for your member accounts.
 
 ## Invoking the solution using a State Manager association
 
-Because CloudFormation doesn’t currently support *target-locations*, use
-the AWS CLI to create the association. Update the highlighted parameters
-and then execute this command in the management or root account of your
-organization.
+Use the following AWS Command Line Interface (AWS CLI) command to create an association. Update the highlighted parameters and then run this command in the management or root account of your organization.
 
-  - **Management account ID**: Specify your management account ID for
-    the SQLServerLTS-SystemsManager-AutomationAdministrationRole ARN.
-
-  - **Organizational unit IDs**: Enter an organizational unit ID (for
-    example, ou-abcd-1qwert43).
-
-  - **Regions**: Specify all AWS Regions (for example, us-east-1) where
-    your SQL Server instances are running.
-
-  - **TargetLocationMaxConcurrency** and **TargetLocationMaxErrors**:
-    Specify these values based on the number of accounts and error
-    thresholds described in
-    [TargetLocation](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_TargetLocation.html)
-    in the AWS Systems Manager API Reference.
+    - **AutomationAssumeRole**: Specify your management account ID for the AutomationAssumeRole ARN.
+    - DeploymentTargets: Enter the organizational unit IDs (for example, ou-abcd-1qwert43), AWS account IDs, or a combination of both.
+    - TargetRegions: Specify all of the AWS Regions (for example, us-east-1) where your Oracle databases are running.
+    - MaxConcurrency and MaxErrors: Specify these values based on the number of accounts and error thresholds described in [StartAutomationExecution](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html#systemsmanager-StartAutomationExecution-request-MaxConcurrency) in the Systems Manager API Reference.
 
 ```
 aws ssm create-association \
     --association-name "SQLServerLicenseTrackingSolutionAssociation" \
-    --name "SetupSQLServerLicenseTrackingSolutionDocument" \
-    --parameters '{"AutomationAssumeRole":["arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"]}' \
-    --no-apply-only-at-cron-interval \
-    --target-locations '[{"Accounts": ["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","OU3-ID"],"Regions": ["REGION-1 like us-east-1","REGION-2"],"TargetLocationMaxConcurrency": "4","TargetLocationMaxErrors": "4","ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole"}]'
+    --name "SQLServerLTS-Orchestrate" \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::ADMINISTRATOR-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"DeploymentTargets":["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","ACCOUNT-ID"],"TargetRegions":["REGION-1 like us-east-1","REGION-2"],"MaxConcurrency":["4"],"MaxErrors":["4"]}' \
+    --no-apply-only-at-cron-interval
 ```
 
 **Note:** This command will invoke the system to run it once immediately after it
@@ -236,25 +225,25 @@ After the association has triggered the automation, open the Systems
 Manager console and from the left navigation pane, choose
 ***Automation***. In **Automation executions**, choose the most recent
 execution of the *SetupSQLServerLicenseTrackingSolutionDocument*, as
-shown in Figure 5.
+shown in Figure 4.
 
 ![](images/ssm-automation-execution-result.png)
-<p align="center">Figure 5: Automation executions (management account)</p>
+<p align="center">Figure 4: Automation executions (management account)</p>
 
 Depending on the number of Regions, accounts, and instances you execute
 this solution against, a successful run of the execution looks like the
 following:
 
 ![](images/ssm-automation-dashboard.png)
-<p align="center">Figure 6: Automation execution detail (management account)</p>
+<p align="center">Figure 5: Automation execution detail (management account)</p>
 
 On the details page for the execution, choose any of the **step ID**s,
 and then under **Outputs**, choose the **execution ID.** Under **Executed steps** 
 click on step #2 ID, you can find the *Automation execution ID* of the
-discover document in the member account, as shown in Figure 7.
+discover document in the member account, as shown in Figure 6.
 
 ![](images/execution-id.png)
-<p align="center">Figure 7: Automation outputs (management account)</p>
+<p align="center">Figure 6: Automation outputs (management account)</p>
 
 
 In the Systems Manager console, search for this ID in the member account
@@ -262,27 +251,25 @@ and Region. Choose the execution ID link to get more information about
 the execution.
 
 ![](images/member-account-ssm-dashboard.png)
-<p align="center">Figure 8: Automation executions (member account)</p>
+<p align="center">Figure 7: Automation executions (member account)</p>
 
 
 To confirm that the license utilization data has been updated in AWS
 License Manager, using the management account and selected Region, open
 the **License Manager** console. Depending on the licenses consumed, the
-**Customer managed licenses** list will look something like Figure 9 in 
+**Customer managed licenses** list will look something like Figure 8 in 
 each region:
 
 
 ![](images/customer-managed-licenses.png)
-<p align="center">Figure 9: Customer managed licenses</p>
+<p align="center">Figure 8: Customer managed licenses</p>
 
 
 ## Adding new accounts and Regions
 
-The solution will automatically cover any new AWS accounts that you provision 
-under the OUs you specified when you created the association 
-(Note: Lambda function that shares the Discover document with member accounts 
-is invoked every day). If you create new OUs or add Regions, you will need to 
-update the following solution components:
+If you add new OU’s, accounts outside of the currently targeted OU’s or Regions, 
+then you must update both the CloudFormation template and association. 
+However, if you are only adding accounts to the currently targeted OU’s then you must only update the association.
 
 **CloudFormation**:
 
@@ -292,14 +279,11 @@ update the following solution components:
 2.  Leave the **Use the current template** option selected.
 
 3.  Under **Automation Documents**, update the **TargetRegions** and
-    **TargetOUs** parameters with the new values.
+    **DeploymentTargets** parameters with the new values.
 
 **Association**:
 
-Use
-[update-association](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ssm/update-association.html)
-to update the current association. Specify the accounts and Regions in
---target-locations.
+Update the association using the instructions provided in [Editing and creating a new version of an association](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-state-assoc-edit.html) by updating the parameters with the new additions.
 
 **Resource data sync**
 Add new resource data sync in the account and Region as described earlier 
