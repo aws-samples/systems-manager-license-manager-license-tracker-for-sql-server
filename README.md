@@ -12,4 +12,4 @@ It’s still possible that your teams might provision software products not gove
 
 We show you how to build a solution that discovers and tracks your Microsoft SQL Server BYOL instances. You can enhance this approach to target other commercial software such as Oracle, SAP, or IBM. There are two solutions that you could leverage depending your environment and use-case:
 * [Tracking in a single account](https://github.com/aws-samples/systems-manager-license-manager-license-tracker-for-sql-server/tree/main/single-account)
-* [Tracking across multiple accounts and regions](https://github.com/aws-samples/systems-manager-license-manager-license-tracker-for-sql-server/tree/main/multi-account-region)
+* [Tracking across multiple accounts and regions](https://github.com/aws-samples/systems-manager-license-manager-license-tracker-for-sql-server/tree/main/organization)
