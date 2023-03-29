@@ -627,8 +627,8 @@ Resources:
                   "Runtime": "python3.7",
                   "Handler": "script_handler",
                   "InputPayload": {
-                    "accountId": "{{ AccountId }}",
-                    "region": "{{ Region }}",
+                    "accountId": "{{global:ACCOUNT_ID}}",
+                    "region": "{{global:REGION}}",
                     "instanceId": "{{ InstanceId }}",
                     "sqlInfo": "{{isBYOLSQLServerInstalled.result}}"
                   },
