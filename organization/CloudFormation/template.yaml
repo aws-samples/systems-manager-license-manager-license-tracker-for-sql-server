@@ -355,7 +355,7 @@ Resources:
       Name: "SQLServerLTS-Orchestrate"
       Content: !Sub |
           {
-            "description": "Orchestrator document for the SQL database License Tracking Solution",
+            "description": "Document to orchestrate the the SQL database License Tracking Solution",
             "schemaVersion": "0.3",
             "assumeRole": "{{ AutomationAssumeRole }}",
             "parameters": {
@@ -381,16 +381,6 @@ Resources:
                 "type": "String",
                 "description": "The IAM role required to execute this document (select SQLServerLTS-SystemsManagerAutomationAdministrationRole from the drop-down if you deployed this solution using CloudFormation)"
               },
-              "SetupDocumentName": {
-                "type": "String",
-                "description": "(required) Document ARN of SetupSQLServerLicenseTrackingSolutionDocument",
-                "default": "arn:aws:ssm:{{global:REGION}}:784315950497:document/SetupSQLServerLicenseTrackingSolutionDocument"
-              },
-              "DiscoverDocumentName": {
-                "type": "String",
-                "description": "(required) Document ARN of DiscoverSQLServerLicenseTrackingSolutionDocument",
-                "default": "arn:aws:ssm:{{global:REGION}}:784315950497:document/DiscoverSQLServerLicenseTrackingSolutionDocument"
-              },
               "MaxConcurrency": {
                 "type": "String",
                 "default": "4"
@@ -402,8 +392,8 @@ Resources:
             },
             "mainSteps": [
               {
-                "name": "invokeSetupSQLServerLicenseTrackingSolutionDocument",
-                "description": "This step invokes the DiscoverSQLServerLicenseTrackingSolutionDocument Automation",
+                "name": "invokeSQLServerLTS_DeleteInventory",
+                "description": "This step invokes the invokeSQLServerLTS_DeleteInventory Automation",
                 "action": "aws:executeAutomation",
                 "inputs": {
                   "RuntimeParameters": {
@@ -411,10 +401,10 @@ Resources:
                       "{{ AutomationAssumeRole }}"
                     ]
                   },
-                  "DocumentName": "{{ SetupDocumentName }}",
+                  "DocumentName": "arn:${AWS::Partition}:ssm:{{global:REGION}}:${AWS::AccountId}:document/SQLServerLTS-DeleteInventory",
                   "TargetLocations": [
                     {
-                      "Accounts": "{{ TargetAccounts }}",
+                      "Accounts": "{{ DeploymentTargets }}",
                       "ExecutionRoleName": "SQLServerLTS-SystemsManagerAutomationExecutionRole",
                       "Regions": "{{ TargetRegions }}",
                       "TargetLocationMaxConcurrency": "{{ MaxConcurrency }}",
@@ -424,11 +414,11 @@ Resources:
                 },
                 "isCritical": true,
                 "onFailure": "Abort",
-                "nextStep": "invokeDiscoverSQLServerLicenseTrackingSolutionAutomation"
+                "nextStep": "invokeSQLServerLTS_ManageLicenceUtilizationAutomation"
               },
               {
-                "name": "invokeDiscoverSQLServerLicenseTrackingSolutionAutomation",
-                "description": "This step invokes the DiscoverSQLServerLicenseTrackingSolutionDocument Automation",
+                "name": "invokeSQLServerLTS_ManageLicenceUtilizationAutomation",
+                "description": "This step invokes the invokeSQLServerLTS_ManageLicenceUtilization Automation",
                 "action": "aws:executeAutomation",
                 "inputs": {
                   "RuntimeParameters": {
@@ -436,10 +426,10 @@ Resources:
                       "{{ AutomationAssumeRole }}"
                     ]
                   },
-                  "DocumentName": "{{ DiscoverDocumentName }}",
+                  "DocumentName": "arn:${AWS::Partition}:ssm:{{global:REGION}}:${AWS::AccountId}:document/SQLServerLTS-ManageLicenceUtilization",
                   "TargetLocations": [
                     {
-                      "Accounts": "{{ TargetAccounts }}",
+                      "Accounts": "{{ DeploymentTargets }}",
                       "ExecutionRoleName": "SQLServerLTS-SystemsManagerAutomationExecutionRole",
                       "Regions": "{{ TargetRegions }}",
                       "TargetLocationMaxConcurrency": "{{ MaxConcurrency }}",
@@ -512,7 +502,7 @@ Resources:
       Name: "SQLServerLTS-ManageLicenceUtilization"
       Content: !Sub |
           {
-            "description": "Document to discover SQL Server for License Tracking Solution",
+            "description": "Document to discover and manage SQL Server license utilization for the SQL Server License Tracking Solution",
             "schemaVersion": "0.3",
             "assumeRole": "{{ AutomationAssumeRole }}",
             "parameters": {

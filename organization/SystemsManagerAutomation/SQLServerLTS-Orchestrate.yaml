@@ -1,32 +1,29 @@
-description: Orchestrator document for the SQL database License Tracking Solution
+description: Document to orchestrate the the SQL database License Tracking Solution
 schemaVersion: '0.3'
-assumeRole: '{{ AutomationAssumeRole }}'
+assumeRole: "{{ AutomationAssumeRole }}"
 parameters:
-  TargetAccounts:
+  DeploymentTargets:
     type: StringList
-    description: 'Specify the AWS Accounts/OUs where SQL databases are deployed'
+    description: Specify the AWS Accounts/OUs where SQL databases are deployed
   TargetRegions:
     type: StringList
-    description: 'Specify the AWS Regions where SQL databases are deployed'
+    description: Specify the AWS Regions where SQL databases are deployed
   TargetKey:
     type: String
-    default: 'tag:SQLServerLTS-ManagedInstance'
-    description: '(Optional) Specify the instances you want to target using Resource Groups, tags (use tag: format) or all instances with InstanceIds. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html for more details.'
+    default: tag:SQLServerLTS-ManagedInstance
+    description: "(Optional) Specify the instances you want to target using Resource
+      Groups, tags (use tag: format) or all instances with InstanceIds. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html
+      for more details."
   TargetValues:
     type: String
     default: 'true'
-    description: '(Optional) Specify the values you want to target like tag value or * for all instances. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html for more details.'
+    description: "(Optional) Specify the values you want to target like tag value
+      or * for all instances. Refer https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_StartAutomationExecution.html
+      for more details."
   AutomationAssumeRole:
     type: String
-    description: The IAM role required to execute this document (select SQLServerLTS-SystemsManagerAutomationAdministrationRole from the drop-down if you deployed this solution using CloudFormation)
-  SetupDocumentName:
-    type: String
-    description: (required) Document ARN of SetupSQLServerLicenseTrackingSolutionDocument
-    default: 'arn:aws:ssm:{{global:REGION}}:784315950497:document/SetupSQLServerLicenseTrackingSolutionDocument'
-  DiscoverDocumentName:
-    type: String
-    description: (required) Document ARN of DiscoverSQLServerLicenseTrackingSolutionDocument
-    default: 'arn:aws:ssm:{{global:REGION}}:784315950497:document/DiscoverSQLServerLicenseTrackingSolutionDocument'
+    description: The IAM role required to execute this document (select SQLServerLTS-SystemsManagerAutomationAdministrationRole
+      from the drop-down if you deployed this solution using CloudFormation)
   MaxConcurrency:
     type: String
     default: '4'
@@ -34,42 +31,42 @@ parameters:
     type: String
     default: '4'
 mainSteps:
-  - name: invokeSetupSQLServerLicenseTrackingSolutionDocument
-    description: This step invokes the DiscoverSQLServerLicenseTrackingSolutionDocument Automation
-    action: 'aws:executeAutomation'
+  - name: invokeSQLServerLTS_DeleteInventory
+    description: This step invokes the invokeSQLServerLTS_DeleteInventory Automation
+    action: aws:executeAutomation
     inputs:
       RuntimeParameters:
         AutomationAssumeRole:
-          - '{{ AutomationAssumeRole }}'
-      DocumentName: '{{ SetupDocumentName }}'
+          - "{{ AutomationAssumeRole }}"
+      DocumentName: arn:${AWS::Partition}:ssm:{{global:REGION}}:${AWS::AccountId}:document/SQLServerLTS-DeleteInventory
       TargetLocations:
-        - Accounts: '{{ TargetAccounts }}'
-          ExecutionRoleName: 'SQLServerLTS-SystemsManagerAutomationExecutionRole'
-          Regions: '{{ TargetRegions }}'
-          TargetLocationMaxConcurrency: '{{ MaxConcurrency }}'
-          TargetLocationMaxErrors: '{{ MaxErrors }}'
+        - Accounts: "{{ DeploymentTargets }}"
+          ExecutionRoleName: SQLServerLTS-SystemsManagerAutomationExecutionRole
+          Regions: "{{ TargetRegions }}"
+          TargetLocationMaxConcurrency: "{{ MaxConcurrency }}"
+          TargetLocationMaxErrors: "{{ MaxErrors }}"
     isCritical: true
     onFailure: Abort
-    nextStep: invokeDiscoverSQLServerLicenseTrackingSolutionAutomation
-  - name: invokeDiscoverSQLServerLicenseTrackingSolutionAutomation
-    description: This step invokes the DiscoverSQLServerLicenseTrackingSolutionDocument Automation
-    action: 'aws:executeAutomation'
+    nextStep: invokeSQLServerLTS_ManageLicenceUtilizationAutomation
+  - name: invokeSQLServerLTS_ManageLicenceUtilizationAutomation
+    description: This step invokes the invokeSQLServerLTS_ManageLicenceUtilization Automation
+    action: aws:executeAutomation
     inputs:
       RuntimeParameters:
         AutomationAssumeRole:
-          - '{{ AutomationAssumeRole }}'
-      DocumentName: '{{ DiscoverDocumentName }}'
+          - "{{ AutomationAssumeRole }}"
+      DocumentName: arn:${AWS::Partition}:ssm:{{global:REGION}}:${AWS::AccountId}:document/SQLServerLTS-ManageLicenceUtilization
       TargetLocations:
-        - Accounts: '{{ TargetAccounts }}'
-          ExecutionRoleName: 'SQLServerLTS-SystemsManagerAutomationExecutionRole'
-          Regions: '{{ TargetRegions }}'
-          TargetLocationMaxConcurrency: '{{ MaxConcurrency }}'
-          TargetLocationMaxErrors: '{{ MaxErrors }}'
-      TargetParameterName: 'InstanceId'
+        - Accounts: "{{ DeploymentTargets }}"
+          ExecutionRoleName: SQLServerLTS-SystemsManagerAutomationExecutionRole
+          Regions: "{{ TargetRegions }}"
+          TargetLocationMaxConcurrency: "{{ MaxConcurrency }}"
+          TargetLocationMaxErrors: "{{ MaxErrors }}"
+      TargetParameterName: InstanceId
       Targets:
-        - Key: '{{ TargetKey }}'
+        - Key: "{{ TargetKey }}"
           Values:
-            - '{{ TargetValues }}'
+            - "{{ TargetValues }}"
     isCritical: true
     onFailure: Abort
     isEnd: true
