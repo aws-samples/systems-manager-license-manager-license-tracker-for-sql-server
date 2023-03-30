@@ -42,11 +42,11 @@ an organization, **complete** these steps.
     - Enable all features in AWS Organizations. With only consolidated billing features enabled, you cannot create a stack set with service-managed permissions.  
     - Enable trusted access with AWS Organizations. After trusted access is enabled, StackSets creates the necessary IAM roles in the organization's management account and target (member) accounts when you create stack sets with service-managed permissions.
   
-  - **Using a delegated administrator.** 
+  - **Use a delegated administrator.** 
   This solution uses the management account within AWS Organizations, but you can also designate an account (delegated administrator) 
   to manage this on behalf of the organization. If you intend to use a delegated account then you will need to register it as delegated administrator for CloudFormation stack set operations as described in [Register a delegated administrator](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html).
 
-  - **Distributing license configurations with member accounts in all target regions.** 
+  - **Distribute license configurations with member accounts in all target regions.** 
     To distribute self-managed licenses within your organization, from the License Manager console of the organization’s management account, choose Settings, and then select Link AWS Organizations accounts. When you select this option, we add a service-linked role to the management and member accounts. Repeat this step for all target regions. If you intend to use delegated administrator account, then from the License Manager console of the organization’s management account, choose Settings, and under Delegated administrator, choose Delegate administrator. Enter the account ID number for the AWS account that you want to assign, and then choose Delegate. You can’t use the ID for the management account. It must be a member account.
 
     Once completed, under the Settings section you should see a link to the new Resource Share ARN ([AWS Resource Access Manager (AWS RAM)](https://aws.amazon.com/ram/)), as shown in  Figure 1.
@@ -144,7 +144,7 @@ capabilities:
 
 # Walkthrough
 
-[![cfn-stack](images/cfn-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=SQLServer-LTS&templateURL=https://pb-solution-artifacts.s3.ap-southeast-2.amazonaws.com/sql-server-lts/template-da.yaml)
+[![cfn-stack](images/cfn-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=SQLServer-LTS&templateURL=https://pb-solution-artifacts.s3.ap-southeast-2.amazonaws.com/sql-server-lts/template.yaml)
 
 To deploy the solution, launch this CloudFormation template in the
 management account of your organization. 
