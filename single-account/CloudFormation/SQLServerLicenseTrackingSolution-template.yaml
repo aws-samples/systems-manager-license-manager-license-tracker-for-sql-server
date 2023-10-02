@@ -23,6 +23,7 @@ Metadata:
         default: 'Express Edition'
       SQLServerDEVLicenseConfiguration:
         default: 'Developer Edition'
+
 Parameters:
   InstanceId:
     Description: (Required) Use * to target all instances in this account or you can specify an individual instance ID
@@ -34,7 +35,7 @@ Parameters:
     Description: (Optional) This parameter is required if you want to target all managed instances using tags
     Type: String
     Default: 'LicenseTrackingSolution-ManagedInstance'
-    ConstraintDescription: Provide a valid tag key in the form of 'tag:ExampleTagKey'
+    ConstraintDescription: Provide a valid tag key
   TagValue:
     Description: (Optional) This parameter is required if you want to target all managed instances using tags
     Type: String
@@ -191,6 +192,9 @@ Resources:
             } ]
           }
       DocumentType: "Automation"
+      UpdateMethod: "NewVersion"
+      TargetType: "/AWS::EC2::Instance"
+
   SecondarySSMDocument:
     Type: 'AWS::SSM::Document'
     Properties:
@@ -391,6 +395,9 @@ Resources:
             } ]
           }
       DocumentType: "Automation"
+      UpdateMethod: "NewVersion"
+      TargetType: "/AWS::EC2::Instance"
+
   SSMAssociation:
     Type: "AWS::SSM::Association"
     Properties:
@@ -420,6 +427,7 @@ Resources:
         SQLServerDEVLicenseConfiguration:
           - !Ref SQLServerDEVLicenseConfiguration
       AssociationName: SQLServerLicenseTrackingSolution-Association
+  
   IAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
