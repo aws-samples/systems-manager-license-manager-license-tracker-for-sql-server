@@ -10,7 +10,7 @@ mainSteps:
     description: 'This clean up step deletes all the metadata associated with the custom inventory type created for MSSQL [Custom:SQLServer] on all the EC2 instances.'
     action: 'aws:executeScript'
     inputs:
-      Runtime: python3.7
+      Runtime: python3.8
       Handler: script_handler
       Script: |-
         import sys

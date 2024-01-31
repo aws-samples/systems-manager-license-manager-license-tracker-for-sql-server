@@ -63,7 +63,7 @@ an organization, **complete** these steps.
     run the following command to create the following license configurations (case-sensitive):
 
     ```
-    for r in {REGION-1,REGION-2}; do for i in { SQLServerEELicenseConfiguration, SQLServerSTDLicenseConfiguration, SQLServerDEVLicenseConfiguration, SQLServerWEBLicenseConfiguration, SQLServerEXPLicenseConfiguration};  do aws license-manager create-license-configuration --name "$i" --license-counting-type vCPU --region $r; done; done
+    for r in REGION-1 REGION-2; do for i in SQLServerEELicenseConfiguration SQLServerSTDLicenseConfiguration SQLServerDEVLicenseConfiguration SQLServerWEBLicenseConfiguration SQLServerEXPLicenseConfiguration; do aws license-manager create-license-configuration --name "$i" --license-counting-type vCPU --region $r; done; done
     ```
 
     - *SQLServerEELicenseConfiguration* for Enterprise Edition

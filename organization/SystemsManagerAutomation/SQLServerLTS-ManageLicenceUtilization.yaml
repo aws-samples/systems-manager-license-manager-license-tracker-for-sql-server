@@ -114,7 +114,7 @@ mainSteps:
                 {
                     'Key': 'InstanceIds',
                     'Values': [
-                        instanceId[0],
+                        instanceId,
                     ]
                 },
             ]
@@ -122,11 +122,11 @@ mainSteps:
           
           if response["InstanceInformationList"]:
             if response["InstanceInformationList"][0]['PingStatus'] == 'Online' and response["InstanceInformationList"][0]['PlatformType'] == 'Windows':
-              status = f"{instanceId[0]} is eligible for this automation execution"
+              status = f"{instanceId} is eligible for this automation execution"
             else:
-              raise Exception(f"{instanceId[0]} currently appears to be unavilable for this automation")
+              raise Exception(f"{instanceId} currently appears to be unavilable for this automation")
           else:
-            raise Exception(f"{instanceId[0]} is ineligible for this automation")
+            raise Exception(f"{instanceId} is ineligible for this automation")
                             
           return status
       InputPayload:
@@ -225,7 +225,7 @@ mainSteps:
           instanceId = events['instanceId']
           
           response = ssm.put_inventory(
-            InstanceId=instanceId[0],
+            InstanceId=instanceId,
             Items=[
                 {
                     'TypeName': 'Custom:SQLServer',
@@ -314,7 +314,7 @@ mainSteps:
           sqlServerWEBLicenseConfig = currentLicenseList['SQLServerWEBLicenseConfiguration']
           sqlServerDEVLicenseConfig = currentLicenseList['SQLServerDEVLicenseConfiguration']
           
-          ec2ARN = f"arn:aws:ec2:{region}:{accountId}:instance/{instanceId[0]}"
+          ec2ARN = f"arn:aws:ec2:{region}:{accountId}:instance/{instanceId}"
           licenseConfigARN = ''
           
           if highestEdition == "Enterprise Edition" and sqlServerEELicenseConfig:
