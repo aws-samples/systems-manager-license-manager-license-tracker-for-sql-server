@@ -96,7 +96,7 @@ mainSteps:
     action: 'aws:executeScript'
     description: 'This step checks if the EC2 instance is eligible for this document. The two criteria for this are - (i) is a SSM managed instance and is currently online, (ii) is running on a Windows operating system'
     inputs:
-      Runtime: python3.7
+      Runtime: python3.8
       Handler: script_handler
       Script: |-
         import sys
@@ -173,18 +173,25 @@ mainSteps:
             {
               $found = "true"
               $server = (get-itemproperty -ErrorAction Stop 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances
-              foreach ($s in $server) 
+              if ($server)
               {
-                $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$s
-                $o = [pscustomobject]@{
-                Name = $p
-                Edition = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Edition
-                Version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Version
+                foreach ($s in $server) 
+                {
+                  $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$s
+                  $o = [pscustomobject]@{
+                  Name = $p
+                  Edition = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Edition
+                  Version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Version
+                  }
+                  $server_info_list = $list.Add($o)
                 }
-                $server_info_list = $list.Add($o)
+                $jsonList = ConvertTo-Json -InputObject $list
+                return $jsonList
               }
-              $jsonList = ConvertTo-Json -InputObject $list
-              return $jsonList
+              else
+              {
+                return $found
+              }
             }
             else
             {
@@ -209,7 +216,7 @@ mainSteps:
     description: 'Using the output of step 3 (metadata) we will update SSM Inventory with a custom inventory of type Custom:SQLServer for the EC2 instance'
     action: 'aws:executeScript'
     inputs:
-      Runtime: python3.7
+      Runtime: python3.8
       Handler: script_handler
       Script: |-
         import boto3
@@ -261,7 +268,7 @@ mainSteps:
     isEnd: true
     onFailure: Abort
     inputs:
-      Runtime: python3.7
+      Runtime: python3.8
       Handler: script_handler
       InputPayload:
         accountId: '{{ AccountId }}'
