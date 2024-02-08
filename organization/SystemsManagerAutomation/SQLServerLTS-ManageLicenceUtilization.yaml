@@ -272,7 +272,7 @@ mainSteps:
       Handler: script_handler
       InputPayload:
         accountId: '{{global:ACCOUNT_ID}}'
-        region: '{{ Region }}'
+        region: '{{global:REGION}}'
         instanceId: '{{ InstanceId }}'
         sqlInfo: '{{isBYOLSQLServerInstalled.result}}'
       Script: |-
