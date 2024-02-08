@@ -361,7 +361,7 @@ Resources:
             "parameters": {
               "DeploymentTargets": {
                 "type": "StringList",
-                "description": "Specify the AWS Organizational Units (OUs) where SQL databases are deployed"
+                "description": "Specify the AWS Accounts/OUs where SQL databases are deployed"
               },
               "TargetRegions": {
                 "type": "StringList",
@@ -392,55 +392,68 @@ Resources:
             },
             "mainSteps": [
               {
-                "description": "This step invokes the invokeSQLServerLTS_DeleteInventory Automation",
                 "name": "invokeSQLServerLTS_DeleteInventory",
-                "action": "aws:executeScript",
-                "nextStep": "invokeSQLServerLTS_ManageLicenceUtilizationAutomation",
-                "isCritical": true,
-                "isEnd": false,
-                "onFailure": "Abort",
+                "description": "This step invokes the invokeSQLServerLTS_DeleteInventory Automation",
+                "action": "aws:executeAutomation",
                 "inputs": {
-                  "Runtime": "python3.8",
-                  "Handler": "script_handler",
-                  "Script": "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n            \n  automationAssumeRole = events['automationAssumeRole']\n  targetAccounts = events['targetAccounts']\n  targetRegions = events['targetRegions']\n  region = events['region']\n  maxConcurrency = events['maxConcurrency']\n  maxErrors = events['maxErrors']\n  accountId = events['accountId']\n  accountList = []\n  documentName = 'arn:aws:ssm:'+region+':'+accountId+':document/SQLServerLTS-DeleteInventory'\n\n  response = client.start_automation_execution(\n    DocumentName=documentName,\n    Parameters={\n      'AutomationAssumeRole': [\n        automationAssumeRole\n      ]\n    },\n    TargetLocations=[\n      {\n        'Accounts': deploymentTargets,\n        'ExecutionRoleName': 'SQLServerLTS-SystemsManagerAutomationExecutionRole',\n        'Regions': targetRegions,\n        'TargetLocationMaxConcurrency': maxConcurrency,\n        'TargetLocationMaxErrors': maxErrors\n      }]\n  )\n        \n  if response[\"AutomationExecutionId\"]:\n    status = documentName+\" has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = documentName+\" was not invoked\"\n    raise Exception(f\"It appears that this step couldn\\'t be completed due to an unknown error. Please check the logs for more details\") \n\n  return {'message': status}",
-                  "InputPayload": {
-                    "deploymentTargets": "{{ DeploymentTargets }}",
-                    "targetRegions": "{{ TargetRegions }}",
-                    "maxConcurrency": "{{ MaxConcurrency }}",
-                    "maxErrors": "{{ MaxErrors }}",
-                    "automationAssumeRole": "{{ AutomationAssumeRole }}",
-                    "accountId": "{{global:ACCOUNT_ID}}",
-                    "region": "{{global:REGION}}"
-                  }
-                }
+                  "RuntimeParameters": {
+                    "AutomationAssumeRole": [
+                      "{{ AutomationAssumeRole }}"
+                    ]
+                  },
+                  "DocumentName": "arn:${AWS::Partition}:ssm:{{global:REGION}}:${AWS::AccountId}:document/SQLServerLTS-DeleteInventory",
+                  "TargetLocations": [
+                    {
+                      "Accounts": "{{ DeploymentTargets }}",
+                      "ExecutionRoleName": "SQLServerLTS-SystemsManagerAutomationExecutionRole",
+                      "Regions": "{{ TargetRegions }}",
+                      "TargetLocationMaxConcurrency": "{{ MaxConcurrency }}",
+                      "TargetLocationMaxErrors": "{{ MaxErrors }}"
+                    }
+                  ]
+                },
+                "isCritical": true,
+                "onFailure": "Abort",
+                "nextStep": "invokeSQLServerLTS_ManageLicenceUtilizationAutomation"
               },
               {
-                "description": "This step invokes the invokeSQLServerLTS_ManageLicenceUtilization Automation",
                 "name": "invokeSQLServerLTS_ManageLicenceUtilizationAutomation",
-                "action": "aws:executeScript",
-                "isCritical": true,
-                "isEnd": true,
-                "onFailure": "Abort",
+                "description": "This step invokes the invokeSQLServerLTS_ManageLicenceUtilization Automation",
+                "action": "aws:executeAutomation",
                 "inputs": {
-                  "Runtime": "python3.8",
-                  "Handler": "script_handler",
-                  "Script": "import sys\nimport boto3\nimport json\nimport botocore\n\ndef script_handler(events, context):\n  client = boto3.client('ssm')\n            \n  automationAssumeRole = events['automationAssumeRole']\n  targetAccounts = events['targetAccounts']\n  targetRegions = events['targetRegions']\n  region = events['region']\n  maxConcurrency = events['maxConcurrency']\n  maxErrors = events['maxErrors']\n  accountId = events['accountId']\n  accountList = []\n  documentName = 'arn:aws:ssm:'+region+':'+accountId+':document/SQLServerLTS-ManageLicenceUtilization'\n         \n  response = client.start_automation_execution(\n    DocumentName=documentName,\n    Parameters={\n      'AutomationAssumeRole': [\n        automationAssumeRole\n      ]\n    },\n    TargetParameterName='InstanceId',\n    Targets=[\n      {\n          'Key': targetKey,\n          'Values': [\n              targetValues\n          ]\n      }\n    ],\n    TargetLocations=[\n      {\n        'Accounts': deploymentTargets,\n        'ExecutionRoleName': 'SQLServerLTS-SystemsManagerAutomationExecutionRole',\n        'Regions': targetRegions,\n        'TargetLocationMaxConcurrency': maxConcurrency,\n        'TargetLocationMaxErrors': maxErrors\n      }]\n  )\n        \n  if response[\"AutomationExecutionId\"]:\n    status = documentName+\" has been successfuly invoked. Check AutomationExecutionId - \" + response[\"AutomationExecutionId\"] + \" for more details\"\n  else:\n    status = documentName+\" was not invoked\"\n    raise Exception(f\"It appears that this step couldn\\'t be completed due to an unknown error. Please check the logs for more details\") \n  \n  return {'message': status}",
-                  "InputPayload": {
-                    "deploymentTargets": "{{ DeploymentTargets }}",
-                    "targetRegions": "{{ TargetRegions }}",
-                    "maxConcurrency": "{{ MaxConcurrency }}",
-                    "maxErrors": "{{ MaxErrors }}",
-                    "automationAssumeRole": "{{ AutomationAssumeRole }}",
-                    "accountId": "{{global:ACCOUNT_ID}}",
-                    "region": "{{global:REGION}}",
-                    "targetKey": "{{ TargetKey }}",
-                    "targetValues": "{{ TargetValues }}"
-                  }
-                }
+                  "RuntimeParameters": {
+                    "AutomationAssumeRole": [
+                      "{{ AutomationAssumeRole }}"
+                    ]
+                  },
+                  "DocumentName": "arn:${AWS::Partition}:ssm:{{global:REGION}}:${AWS::AccountId}:document/SQLServerLTS-ManageLicenceUtilization",
+                  "TargetLocations": [
+                    {
+                      "Accounts": "{{ DeploymentTargets }}",
+                      "ExecutionRoleName": "SQLServerLTS-SystemsManagerAutomationExecutionRole",
+                      "Regions": "{{ TargetRegions }}",
+                      "TargetLocationMaxConcurrency": "{{ MaxConcurrency }}",
+                      "TargetLocationMaxErrors": "{{ MaxErrors }}"
+                    }
+                  ],
+                  "TargetParameterName": "InstanceId",
+                  "Targets": [
+                    {
+                      "Key": "{{ TargetKey }}",
+                      "Values": [
+                        "{{ TargetValues }}"
+                      ]
+                    }
+                  ]
+                },
+                "isCritical": true,
+                "onFailure": "Abort",
+                "isEnd": true
               }
             ]
           }
       DocumentType: "Automation"
+      UpdateMethod: "NewVersion"
       TargetType: "/AWS::EC2::Instance"
   
   SQLServerLTSDeleteInventory:
@@ -482,6 +495,7 @@ Resources:
               ]
             }
         DocumentType: "Automation"
+        UpdateMethod: "NewVersion"
         TargetType: "/AWS::EC2::Instance"
 
   SQLServerLTSTrackLicenceUtilization:
@@ -615,7 +629,7 @@ Resources:
                   "Runtime": "python3.8",
                   "Handler": "script_handler",
                   "InputPayload": {
-                    "accountId": "{{ AccountId }}",
+                    "accountId": "{{global:ACCOUNT_ID}}",
                     "region": "{{ Region }}",
                     "instanceId": "{{ InstanceId }}",
                     "sqlInfo": "{{isBYOLSQLServerInstalled.result}}"
@@ -658,4 +672,5 @@ Resources:
             ]
           }
       DocumentType: "Automation"
+      UpdateMethod: "NewVersion"
       TargetType: "/AWS::EC2::Instance"

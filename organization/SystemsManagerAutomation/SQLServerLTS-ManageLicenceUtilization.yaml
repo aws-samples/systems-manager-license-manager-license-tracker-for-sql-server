@@ -271,7 +271,7 @@ mainSteps:
       Runtime: python3.8
       Handler: script_handler
       InputPayload:
-        accountId: '{{ AccountId }}'
+        accountId: '{{global:ACCOUNT_ID}}'
         region: '{{ Region }}'
         instanceId: '{{ InstanceId }}'
         sqlInfo: '{{isBYOLSQLServerInstalled.result}}'
