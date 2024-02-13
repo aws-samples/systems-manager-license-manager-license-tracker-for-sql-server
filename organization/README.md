@@ -199,7 +199,7 @@ Use the following AWS Command Line Interface (AWS CLI) command to create an asso
 aws ssm create-association \
     --association-name "SQLServerLicenseTrackingSolutionAssociation" \
     --name "SQLServerLTS-Orchestrate" \
-    --parameters '{"AutomationAssumeRole":["arn:aws:iam::ADMINISTRATOR-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"DeploymentTargets":["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID","ACCOUNT-ID"],"TargetRegions":["REGION-1 like us-east-1","REGION-2"],"MaxConcurrency":["4"],"MaxErrors":["4"]}' \
+    --parameters '{"AutomationAssumeRole":["arn:aws:iam::ADMINISTRATOR-ACCOUNT-ID:role/SQLServerLTS-SystemsManager-AutomationAdministrationRole"],"DeploymentTargets":["OU1-ID LIKE ou-abcd-1qwert43","OU2-ID"],"TargetRegions":["REGION-1 like us-east-1","REGION-2"],"MaxConcurrency":["4"],"MaxErrors":["4"]}' \
     --no-apply-only-at-cron-interval
 ```
 
