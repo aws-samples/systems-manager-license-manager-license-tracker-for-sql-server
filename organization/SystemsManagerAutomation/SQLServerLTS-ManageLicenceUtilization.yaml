@@ -4,9 +4,8 @@ assumeRole: '{{ AutomationAssumeRole }}'
 parameters:
   InstanceId:
     description: (Required) Use * to target all instances in this account or you can specify an individual instance ID
-    type: StringList
-    default:
-      - '*'
+    type: String
+    default: '*'
     allowedPattern: '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
   AutomationAssumeRole:
     type: String
