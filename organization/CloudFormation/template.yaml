@@ -405,7 +405,7 @@ Resources:
                   "TargetLocations": [
                     {
                       "Accounts": "{{ DeploymentTargets }}",
-                      "ExecutionRoleName": "SQLServerLTS-SystemsManagerAutomationExecutionRole",
+                      "ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole",
                       "Regions": "{{ TargetRegions }}",
                       "TargetLocationMaxConcurrency": "{{ MaxConcurrency }}",
                       "TargetLocationMaxErrors": "{{ MaxErrors }}"
@@ -430,7 +430,7 @@ Resources:
                   "TargetLocations": [
                     {
                       "Accounts": "{{ DeploymentTargets }}",
-                      "ExecutionRoleName": "SQLServerLTS-SystemsManagerAutomationExecutionRole",
+                      "ExecutionRoleName": "SQLServerLTS-SystemsManager-AutomationExecutionRole",
                       "Regions": "{{ TargetRegions }}",
                       "TargetLocationMaxConcurrency": "{{ MaxConcurrency }}",
                       "TargetLocationMaxErrors": "{{ MaxErrors }}"
