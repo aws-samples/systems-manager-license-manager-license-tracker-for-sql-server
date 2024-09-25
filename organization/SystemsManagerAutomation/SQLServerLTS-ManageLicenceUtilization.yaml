@@ -226,7 +226,7 @@ mainSteps:
 
         def script_handler(events, context):
           sqlInfo = events['sqlInfo']
-          infoList = list(eval(sqlInfo))
+          infoList = json.loads(sqlInfo)
           timestamp = datetime.now(timezone.utc).isoformat()[:-13] + 'Z'
           instanceId = events['instanceId']
           
