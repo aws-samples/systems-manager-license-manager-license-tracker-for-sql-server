@@ -1,4 +1,4 @@
-# Use AWS License Manager and AWS Systems Manager to discover SQL Server BYOL instances
+# Use AWS License Manager and AWS Systems Manager to discover SQL Server instances
 
 
 Most enterprises find it hard to maintain control of the commercial licensing of Microsoft, SAP, Oracle, and IBM products due to limited visibility. They wind up over-provisioning licenses to avoid any hassle or under-provisioning licenses, only to be faced with steep penalties. 
@@ -137,12 +137,12 @@ The steps in the primary document are executed in the following order.
 
 The steps in the secondary document are executed in the following order.
 
-1.	**Remove old License Manager data (removeLicenseConfigDataForInstance)**: This step performs a clean-up task, removing any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data to License Manager in case changes have been made. 
-2.	**Assert instance eligibility (assertInstanceEligibility)**: Checks if the EC2 instance is eligible for this document. The two criteria are:
+1.  **Assert instance eligibility (assertInstanceEligibility)**: Checks if the EC2 instance is eligible for this document. The two criteria are:
   •	The instance is managed by Systems Manager and currently online.
   •	The instance is running on a Windows operating system.
-3.	**Is BYOL SQL installed (isBYOLSQLServerInstalled)**: Checks if Microsoft SQL Server is installed, is not a SQL Server License Included instance and if it exists then retrieve the SQL Server(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the SQL Servers 
-4.	**Conditional logic (foundSQLServerInstalledBranch)**: Performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) action based on the evaluation of the previous step. Defaults to the next step if MSSQL exists on the EC2 instance. Exits if unavailable.
+2.	**Is SQL installed (isSQLServerInstalled)**: Checks if Microsoft SQL Server is installed and if it exists then retrieve the SQL Server(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the SQL Servers 
+3.	**Conditional logic (foundSQLServerInstalledBranch)**: Performs a [branch](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-branch.html) action based on the evaluation of the previous step. Defaults to the next step if MSSQL exists on the EC2 instance. Exits if unavailable.
+4.  **Remove old License Manager data (removeLicenseConfigDataForInstance)**: This step performs a clean-up task, removing any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data to License Manager in case changes have been made. 
 5.	**Update SSM Inventory (updateInventory)**: Uses the output of step 3 (metadata) to update Inventory with a custom inventory of type Custom:SQLServer for the EC2 instance.
 6.	**Update AWS License Manager (updateLicenseManager)**: Determines the most recent edition of SQL Server installed and updates the AWS License Manager configuration associated with the EC2 instance accordingly.
 7.	**End (exitIfNoSqlServerFound)**: Is triggered if no SQL Server instances are found. 
@@ -155,12 +155,10 @@ The steps in the secondary document are executed in the following order.
 4.	For Document version, choose Default at runtime.
 5.	Choose Simple execution. 
 6.	Under Input parameters, enter the following:
-  * InstanceId: `<Use * to target all instances in this account or specify an individual instance ID, the default is *>`
+  * InstanceId: `<Use * to target all instances using tags in this account or specify an individual instance ID, the default is *>`
   * TagKey: `<Specify a Tag name that will be used to filter the managed instances for this solution, the default value is LicenseTrackingSolution-ManagedInstance. Ensure the same key is used to tag your EC2 instances or virtual machines>`
   * TagValue: `<Specify the Tag value corresponding with the TagKey, the default value is true. Ensure the same value is used to tag your EC2 instances or virtual machines>`
   * Region: `<Region where you are deploying this document otherwise the region in which this document is executed will be used. Ensure the same is used to tag your EC2 instances or virtual machines>`
-  * AccountId: `<Account ID where you are deploying this document otherwise the account in which this document is executed will be used>`
-  * LicenseConfiguration(s): `<AWS License Manager configuration ARN associated with the editions of SQL Server running on instances>`
   * AutomationAssumeRole: choose `SQLServerLicenseTrackingSolution-Role`
 9.	For Specify schedule, you can either choose **CRON schedule builder** to run at your preferred time or **No schedule** to run the association once. We configured the association to run once.
 10. Choose **Create Association**

@@ -27,7 +27,7 @@ accounts and Regions that are part of an organization in [AWS
 Organizations](https://aws.amazon.com/organizations/). You can enhance
 this approach to target other commercial software such as Oracle, SAP,
 or IBM. For single account setups, see the [Use AWS License Manager and
-AWS Systems Manager to discover SQL Server BYOL
+AWS Systems Manager to discover SQL Server 
 instances](https://aws.amazon.com/blogs/mt/use-aws-license-manager-and-aws-systems-manager-to-discover-sql-server-byol-instances/)
 blog post.
 
