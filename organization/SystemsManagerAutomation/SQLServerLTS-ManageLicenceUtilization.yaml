@@ -11,86 +11,6 @@ parameters:
     type: String
     description: The IAM role required to execute this document
 mainSteps:
-  - name: removeLicenseConfigDataForInstance
-    action: 'aws:executeScript'
-    description: This step performs a clean up task. Removing any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data to License Manager in case changes have been made
-    inputs:
-      Runtime: python3.8
-      Handler: script_handler
-      Script: |-
-        import boto3
-        import json
-        import botocore
-
-        def script_handler(events, context):
-
-          lmClient = boto3.client('license-manager')
-          currentLicenseList = {}
-          listResponse = lmClient.list_license_configurations()
-            
-          if listResponse['LicenseConfigurations']:
-            for config in listResponse['LicenseConfigurations']:
-              if config['Name']:
-                currentLicenseList[config['Name']] = config['LicenseConfigurationArn']
-          
-          accountId = events['accountId'] 
-          region = events['region'] 
-          instanceId = events['instanceId']
-          sqlServerEELicenseConfig = currentLicenseList['SQLServerEELicenseConfiguration'] 
-          sqlServerSTDLicenseConfig = currentLicenseList['SQLServerSTDLicenseConfiguration']
-          sqlServerEXPLicenseConfig = currentLicenseList['SQLServerEXPLicenseConfiguration']
-          sqlServerWEBLicenseConfig = currentLicenseList['SQLServerWEBLicenseConfiguration']
-          sqlServerDEVLicenseConfig = currentLicenseList['SQLServerDEVLicenseConfiguration']
-
-          ec2ARN = f"arn:aws:ec2:{region}:{accountId}:instance/{instanceId}"
-          licenseConfigARN = ''
-          numberOfUpdates = 0
-          
-          try:
-            lmResponse = lmClient.list_license_specifications_for_resource(
-                          ResourceArn=ec2ARN,
-                          MaxResults=10
-                          )
-                          
-            if lmResponse['LicenseSpecifications']:
-              for spec in lmResponse['LicenseSpecifications']:
-                if spec['LicenseConfigurationArn']:
-                  if (sqlServerEELicenseConfig and spec['LicenseConfigurationArn'] == sqlServerEELicenseConfig):
-                   licenseConfigARN = sqlServerEELicenseConfig
-                   
-                  elif (sqlServerSTDLicenseConfig and spec['LicenseConfigurationArn'] == sqlServerSTDLicenseConfig):
-                   licenseConfigARN = sqlServerSTDLicenseConfig
-                                
-                  elif (sqlServerEXPLicenseConfig and spec['LicenseConfigurationArn'] == sqlServerEXPLicenseConfig):
-                   licenseConfigARN = sqlServerEXPLicenseConfig
-                  
-                  elif (sqlServerWEBLicenseConfig and spec['LicenseConfigurationArn'] == sqlServerWEBLicenseConfig):
-                   licenseConfigARN = sqlServerWEBLicenseConfig
-                  
-                  elif (sqlServerDEVLicenseConfig and spec['LicenseConfigurationArn'] == sqlServerDEVLicenseConfig):
-                    licenseConfigARN = sqlServerDEVLicenseConfig
-                                
-                if licenseConfigARN:
-                  updateResponse = lmClient.update_license_specifications_for_resource(
-                                ResourceArn=ec2ARN,
-                                RemoveLicenseSpecifications=[
-                                {
-                                    'LicenseConfigurationArn': licenseConfigARN
-                                }]);
-                  numberOfUpdates = numberOfUpdates + 1
-                  licenseConfigARN = ''                
-          
-          except botocore.exceptions.ClientError as error:
-            if 'Resource ARN is invalid' in error.response['Error']['Message']:
-              print('EC2 does not exist for this resource. Skipping this step') 
-            
-          return {'message': f"Removed {ec2ARN} from {numberOfUpdates} License Configuration(s)" }
-      InputPayload:
-        instanceId: '{{ InstanceId }}'
-        accountId: '{{global:ACCOUNT_ID}}'
-        region: '{{global:REGION}}'
-    nextStep: assertInstanceEligibility
-    onFailure: Abort
   - name: assertInstanceEligibility
     action: 'aws:executeScript'
     description: 'This step checks if the EC2 instance is eligible for this document. The two criteria for this are - (i) is a SSM managed instance and is currently online, (ii) is running on a Windows operating system'
@@ -103,11 +23,11 @@ mainSteps:
         import json
         import botocore
 
+        client = boto3.client('ssm')
+
         def script_handler(events, context):
           instanceId = events['instanceId']
 
-          client = boto3.client('ssm')
-          
           response = client.describe_instance_information(
             Filters=[
                 {
@@ -130,13 +50,14 @@ mainSteps:
           return status
       InputPayload:
         instanceId: '{{ InstanceId }}'
-    nextStep: isBYOLSQLServerInstalled
+    nextStep: isSQLServerInstalled
     isCritical: false
-  - name: isBYOLSQLServerInstalled
-    description: 'In this step we check if SQL Server is installed, is not a SQL Server License Included instance and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the SQL Servers'
+  - name: isSQLServerInstalled
+    description: 'In this step we check if SQL Server is installed and if it exists then retrieve the instance(s) details running on the EC2 instance using Windows Registry. The output captures the Name, Edition and Version of the SQL Servers'
     isEnd: false
     action: 'aws:runCommand'
     onFailure: Abort
+    nextStep: foundSQLServerInstalledBranch
     inputs:
       DocumentName: AWS-RunPowerShellScript
       InstanceIds:
@@ -145,27 +66,7 @@ mainSteps:
         commands:
           - |
             $found = "false"
-
-            try {
-              $webrequest = [System.Net.WebRequest]::Create("http://169.254.169.254/latest/dynamic/instance-identity/document")
-              $response = $webrequest.GetResponse()
-              $stream = $response.GetResponseStream()
-              $sr = new-object System.IO.StreamReader($stream)
-              $content = $sr.ReadToEnd();
-              [System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions") | out-null
-              $ser = New-Object System.Web.Script.Serialization.JavaScriptSerializer
-              $billingProduct = $ser.DeserializeObject($content).billingProducts
-
-              if (($billingProduct -eq "bp-6aa54003") -or ($billingProduct -eq "bp-62a5400b") -or ($billingProduct -eq "bp-65a5400c")) 
-              {
-                return $found
-              }
-            }
-
-            catch {
-                $ErrorMessage = $Error[0].Exception.ErrorRecord.Exception.Message;
-            }
-
+            
             $list = New-Object System.Collections.ArrayList
             $pathExists = Test-Path -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server"
             if ($pathExists)
@@ -208,9 +109,103 @@ mainSteps:
     inputs:
       Choices:
         - NextStep: exitIfNoSqlServerFound
-          Variable: '{{isBYOLSQLServerInstalled.result}}'
+          Variable: '{{isSQLServerInstalled.result}}'
           Contains: 'false'
-      Default: updateInventory
+      Default: removeLicenseConfigDataForInstance
+  - name: removeLicenseConfigDataForInstance
+    action: 'aws:executeScript'
+    description: This step performs a clean up task. Removing any association to the license configuration if they exist. This gives us an opportunity to rehydrate the latest data to License Manager in case changes have been made
+    inputs:
+      Runtime: python3.8
+      Handler: script_handler
+      Script: |-
+        import boto3
+        import json
+        import botocore
+
+        lmClient = boto3.client('license-manager')
+
+        def script_handler(events, context):
+          currentLicenseList = {}
+          listResponse = lmClient.list_license_configurations()
+            
+          if listResponse['LicenseConfigurations']:
+            for config in listResponse['LicenseConfigurations']:
+              if config['Name']:
+                currentLicenseList[config['Name']] = config['LicenseConfigurationArn']
+          
+          accountId = events['accountId'] 
+          region = events['region'] 
+          instanceId = events['instanceId']
+          sqlServerEELicenseConfigBYOL = currentLicenseList['SQLServerEELicenseConfigurationBYOL']
+          sqlServerSTDLicenseConfigBYOL = currentLicenseList['SQLServerSTDLicenseConfigurationBYOL']
+          sqlServerEXPLicenseConfigBYOL = currentLicenseList['SQLServerEXPLicenseConfigurationBYOL']
+          sqlServerWEBLicenseConfigBYOL = currentLicenseList['SQLServerWEBLicenseConfigurationBYOL']
+          sqlServerDEVLicenseConfigBYOL = currentLicenseList['SQLServerDEVLicenseConfigurationBYOL']
+
+          sqlServerSTDLicenseConfigLI = currentLicenseList['SQLServerSTDLicenseConfigurationLI']
+          sqlServerEELicenseConfigLI = currentLicenseList['SQLServerEELicenseConfigurationLI']
+          sqlServerWEBLicenseConfigLI = currentLicenseList['SQLServerWEBLicenseConfigurationLI']
+          
+
+          ec2ARN = f"arn:aws:ec2:{region}:{accountId}:instance/{instanceId}"
+          licenseConfigARN = ''
+          numberOfUpdates = 0
+          
+          try:
+            lmResponse = lmClient.list_license_specifications_for_resource(
+                          ResourceArn=ec2ARN,
+                          MaxResults=10
+                          )
+                          
+            if lmResponse['LicenseSpecifications']:
+              for spec in lmResponse['LicenseSpecifications']:
+                if spec['LicenseConfigurationArn']:
+                  if (sqlServerEELicenseConfigBYOL and spec['LicenseConfigurationArn'] == sqlServerEELicenseConfigBYOL):
+                   licenseConfigARN = sqlServerEELicenseConfigBYOL
+
+                  elif (sqlServerEELicenseConfigLI and spec['LicenseConfigurationArn'] == sqlServerEELicenseConfigLI):
+                   licenseConfigARN = sqlServerEELicenseConfigLI
+                   
+                  elif (sqlServerSTDLicenseConfigBYOL and spec['LicenseConfigurationArn'] == sqlServerSTDLicenseConfigBYOL):
+                   licenseConfigARN = sqlServerSTDLicenseConfigBYOL
+                  
+                  elif (sqlServerSTDLicenseConfigLI and spec['LicenseConfigurationArn'] == sqlServerSTDLicenseConfigLI):
+                   licenseConfigARN = sqlServerSTDLicenseConfigLI
+                                
+                  elif (sqlServerEXPLicenseConfigBYOL and spec['LicenseConfigurationArn'] == sqlServerEXPLicenseConfigBYOL):
+                   licenseConfigARN = sqlServerEXPLicenseConfigBYOL
+                  
+                  elif (sqlServerWEBLicenseConfigBYOL and spec['LicenseConfigurationArn'] == sqlServerWEBLicenseConfigBYOL):
+                   licenseConfigARN = sqlServerWEBLicenseConfigBYOL
+
+                  elif (sqlServerWEBLicenseConfigLI and spec['LicenseConfigurationArn'] == sqlServerWEBLicenseConfigLI):
+                   licenseConfigARN = sqlServerWEBLicenseConfigLI
+                  
+                  elif (sqlServerDEVLicenseConfigBYOL and spec['LicenseConfigurationArn'] == sqlServerDEVLicenseConfigBYOL):
+                    licenseConfigARN = sqlServerDEVLicenseConfigBYOL
+                                
+                if licenseConfigARN:
+                  updateResponse = lmClient.update_license_specifications_for_resource(
+                                ResourceArn=ec2ARN,
+                                RemoveLicenseSpecifications=[
+                                {
+                                    'LicenseConfigurationArn': licenseConfigARN
+                                }]);
+                  numberOfUpdates = numberOfUpdates + 1
+                  licenseConfigARN = ''                
+          
+          except botocore.exceptions.ClientError as error:
+            if 'Resource ARN is invalid' in error.response['Error']['Message']:
+              print('EC2 does not exist for this resource. Skipping this step') 
+            
+          return {'message': f"Removed {ec2ARN} from {numberOfUpdates} License Configuration(s)" }
+      InputPayload:
+        instanceId: '{{ InstanceId }}'
+        accountId: '{{global:ACCOUNT_ID}}'
+        region: '{{global:REGION}}'
+    nextStep: updateInventory
+    onFailure: Abort
   - name: updateInventory
     description: 'Using the output of step 3 (metadata) we will update SSM Inventory with a custom inventory of type Custom:SQLServer for the EC2 instance'
     action: 'aws:executeScript'
@@ -254,7 +249,7 @@ mainSteps:
           return {'message': status}
       InputPayload:
         instanceId: '{{InstanceId}}'
-        sqlInfo: '{{isBYOLSQLServerInstalled.result}}'
+        sqlInfo: '{{isSQLServerInstalled.result}}'
     isEnd: false
     outputs:
       - Name: result
@@ -273,16 +268,17 @@ mainSteps:
         accountId: '{{global:ACCOUNT_ID}}'
         region: '{{global:REGION}}'
         instanceId: '{{ InstanceId }}'
-        sqlInfo: '{{isBYOLSQLServerInstalled.result}}'
+        sqlInfo: '{{isSQLServerInstalled.result}}'
       Script: |-
         import boto3
         import json
         import re
         from re import search
 
+        ec2 = boto3.client('ec2')
+        lmClient = boto3.client('license-manager')
+
         def script_handler(events, context):
-          
-          lmClient = boto3.client('license-manager')
           currentLicenseList = {}
           sqlInfo = events['sqlInfo']
           jsonSqlInfo = json.loads(sqlInfo)
@@ -314,36 +310,50 @@ mainSteps:
           accountId = events['accountId'] 
           region = events['region'] 
           instanceId = events['instanceId']
-          sqlServerEELicenseConfig = currentLicenseList['SQLServerEELicenseConfiguration'] 
-          sqlServerSTDLicenseConfig = currentLicenseList['SQLServerSTDLicenseConfiguration']
-          sqlServerEXPLicenseConfig = currentLicenseList['SQLServerEXPLicenseConfiguration']
-          sqlServerWEBLicenseConfig = currentLicenseList['SQLServerWEBLicenseConfiguration']
-          sqlServerDEVLicenseConfig = currentLicenseList['SQLServerDEVLicenseConfiguration']
+
+          sqlServerEELicenseConfigBYOL = currentLicenseList['SQLServerEELicenseConfigurationBYOL']
+          sqlServerSTDLicenseConfigBYOL = currentLicenseList['SQLServerSTDLicenseConfigurationBYOL']
+          sqlServerEXPLicenseConfigBYOL = currentLicenseList['SQLServerEXPLicenseConfigurationBYOL']
+          sqlServerWEBLicenseConfigBYOL = currentLicenseList['SQLServerWEBLicenseConfigurationBYOL']
+          sqlServerDEVLicenseConfigBYOL = currentLicenseList['SQLServerDEVLicenseConfigurationBYOL']
+
+          sqlServerSTDLicenseConfigLI = currentLicenseList['SQLServerSTDLicenseConfigurationLI']
+          sqlServerEELicenseConfigLI = currentLicenseList['SQLServerEELicenseConfigurationLI']
+          sqlServerWEBLicenseConfigLI = currentLicenseList['SQLServerWEBLicenseConfigurationLI']
           
           ec2ARN = f"arn:aws:ec2:{region}:{accountId}:instance/{instanceId}"
+          ec2Details = ec2.describe_instances(InstanceIds=[instanceId])
+          usageOperation = ec2Details['Reservations'][0]['Instances'][0]['UsageOperation']
           licenseConfigARN = ''
           
-          if highestEdition == "Enterprise Edition" and sqlServerEELicenseConfig:
-            licenseConfigARN = sqlServerEELicenseConfig
-             
-          elif highestEdition == "Standard Edition" and sqlServerSTDLicenseConfig:
-            licenseConfigARN =  sqlServerSTDLicenseConfig
+          if highestEdition == "Enterprise Edition":
+            if usageOperation == "RunInstances:0102" and sqlServerEELicenseConfigLI:
+              licenseConfigARN = sqlServerEELicenseConfigLI
+            elif sqlServerEELicenseConfigBYOL:
+              licenseConfigARN = sqlServerEELicenseConfigBYOL
+          
+          elif highestEdition == "Standard Edition" :
+            if usageOperation == "RunInstances:0006" and sqlServerSTDLicenseConfigLI:
+              licenseConfigARN = sqlServerSTDLicenseConfigLI
+            elif sqlServerSTDLicenseConfigBYOL:
+              licenseConfigARN = sqlServerSTDLicenseConfigBYOL 
+              
+          elif highestEdition == "Web Edition":
+            if usageOperation == "RunInstances:0202" and sqlServerSTDLicenseConfigLI:
+              licenseConfigARN = sqlServerWEBLicenseConfigLI
+            elif sqlServerSTDLicenseConfigBYOL:
+              licenseConfigARN = sqlServerWEBLicenseConfigBYOL
             
-          elif highestEdition == "Web Edition" and sqlServerWEBLicenseConfig:
-            licenseConfigARN =  sqlServerWEBLicenseConfig 
-            
-          elif highestEdition == "Express Edition" and sqlServerEXPLicenseConfig:
-            licenseConfigARN  = sqlServerEXPLicenseConfig
+          elif highestEdition == "Express Edition" and sqlServerEXPLicenseConfigBYOL:
+            licenseConfigARN  = sqlServerEXPLicenseConfigBYOL
                   
-          elif highestEdition == "Developer Edition" and sqlServerDEVLicenseConfig:
-            licenseConfigARN  = sqlServerDEVLicenseConfig
+          elif highestEdition == "Developer Edition" and sqlServerDEVLicenseConfigBYOL:
+            licenseConfigARN  = sqlServerDEVLicenseConfigBYOL
             
           else:
             raise Exception(f"Sorry, No {highestEdition} License Configuration ARN has been supplied")
             
-            
           if licenseConfigARN:
-              
             response = lmClient.update_license_specifications_for_resource(
               ResourceArn=ec2ARN,
               AddLicenseSpecifications=[
@@ -374,7 +384,7 @@ mainSteps:
       Parameters:
         commands:
           - |
-            $message= 'No SQL Instances found'
+            $message= 'No SQL instances found'
             return $message
       InstanceIds:
         - '{{ InstanceId }}'

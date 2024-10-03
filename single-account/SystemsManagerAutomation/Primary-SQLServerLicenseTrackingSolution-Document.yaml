@@ -6,7 +6,7 @@ outputs:
   - invokeSecondarySQLServerLicenseTrackingSolutionAutomation.result
 parameters:
   InstanceId:
-    description: (Required) Use * to target all instances in this account or specify an individual instance ID
+    description: (Required) Use * to target all instances using tags in this account or specify an individual instance ID
     type: String
     default: '*'
     allowedPattern : '\*|^[m]{0,1}i-[a-z0-9]{8,17}'
@@ -22,30 +22,6 @@ parameters:
     type: String
     description: (Optional) Specify the AWS Region where you are deploying this document otherwise the region in which this document is executed will be used
     default: '{{global:REGION}}'
-  AccountId:
-    type: String
-    description: (Optional) Specify the AWS Account ID where you are deploying this document otherwise the account in which this document is executed will be used
-    default: '{{global:ACCOUNT_ID}}'
-  SQLServerEELicenseConfiguration:
-    type: String
-    description: License Configuration for SQL Enterprise Edition or leave it as -
-    default: '-'
-  SQLServerEXPLicenseConfiguration:
-    type: String
-    description: License Configuration for SQL Express Edition or leave it as -
-    default: '-'
-  SQLServerSTDLicenseConfiguration:
-    type: String
-    description: License Configuration for SQL Standard Edition or leave it as -
-    default: '-'
-  SQLServerWEBLicenseConfiguration:
-    type: String
-    description: License Configuration for SQL Web Edition or leave it as -
-    default: '-'
-  SQLServerDEVLicenseConfiguration:
-    type: String
-    description: License Configuration for SQL Developer Edition or leave it as -
-    default: '-'
   AutomationAssumeRole:
     type: String
     description: 'The IAM role for this execution. If no role is specified, then AWS Systems Manager Automation will be unable to complete.'
@@ -122,11 +98,6 @@ mainSteps:
           tagKey = events['tagKey']
           tagValue = events['tagValue']
           region = events['region']
-          sqlServerEELicenseConfig = events['sqlServerEELicenseConfig']
-          sqlServerSTDLicenseConfig = events['sqlServerSTDLicenseConfig']
-          sqlServerEXPLicenseConfig = events['sqlServerEXPLicenseConfig']
-          sqlServerWEBLicenseConfig = events['sqlServerWEBLicenseConfig']
-          sqlServerDEVLicenseConfig = events['sqlServerDEVLicenseConfig']
           automationAssumeRole = events['automationAssumeRole']
           
           if instanceId == '*':
@@ -142,9 +113,6 @@ mainSteps:
                 'Region': [
                     region
                 ],
-                'AccountId': [
-                    accountId
-                ],
                 'InstanceId': [
                     instanceId
                 ],
@@ -153,21 +121,6 @@ mainSteps:
                 ],
                 'TagValue': [
                     tagValue
-                ],
-                'SQLServerEELicenseConfiguration': [
-                    sqlServerEELicenseConfig
-                ],
-                'SQLServerSTDLicenseConfiguration': [
-                    sqlServerSTDLicenseConfig
-                ],
-                'SQLServerEXPLicenseConfiguration': [
-                    sqlServerEXPLicenseConfig
-                ],
-                'SQLServerWEBLicenseConfiguration': [
-                    sqlServerWEBLicenseConfig
-                ],
-                'SQLServerDEVLicenseConfiguration': [
-                    sqlServerDEVLicenseConfig
                 ],
                 'AutomationAssumeRole': [
                     automationAssumeRole
@@ -195,13 +148,8 @@ mainSteps:
         instanceId: '{{ InstanceId }}'
         tagKey: '{{ TagKey }}'
         tagValue: '{{ TagValue }}'
-        accountId: '{{ AccountId }}'
+        accountId: '{{global:ACCOUNT_ID}}'
         region: '{{ Region }}'
-        sqlServerEELicenseConfig: '{{ SQLServerEELicenseConfiguration }}'
-        sqlServerSTDLicenseConfig: '{{ SQLServerSTDLicenseConfiguration }}'
-        sqlServerEXPLicenseConfig: '{{ SQLServerEXPLicenseConfiguration }}'
-        sqlServerWEBLicenseConfig: '{{ SQLServerWEBLicenseConfiguration }}'
-        sqlServerDEVLicenseConfig: '{{ SQLServerDEVLicenseConfiguration }}'
         automationAssumeRole: '{{ AutomationAssumeRole }}'
     outputs:
       - Name: result
