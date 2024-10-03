@@ -36,9 +36,7 @@ To implement this solution, we need to complete the following steps:
 3.	Create a State Manager association, which invokes the Automation document.
 4.	Test the solution.
 
-If you prefer to use a CloudFormation template to create these resources, launch the following stack.
-
-[![cfn-stack](images/cfn-stack.png)]((https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=MSSQL-LT-Solution&templateURL=https://sql-lts-cfn-templates.s3-ap-southeast-2.amazonaws.com/single-account/SQLServerLicenseTrackingSolution-template.yaml))
+If you prefer to use CloudFormation to create these resources, then download this [template] (https://d2908q01vomqb2.cloudfront.net/artifacts/MTBlog/DevOps-1574/sql-server-lts/single-account/template.yml) and launch it in your AWS Account.
 
 ## Create an IAM service role and policy
 
@@ -54,7 +52,24 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
             "Sid": "sid0",
             "Effect": "Allow",
             "Action": [
-                "license-manager:UpdateLicenseSpecificationsForResource"
+                "license-manager:UpdateLicenseSpecificationsForResource",
+                "ssm:DeleteInventory",
+                "ssm:PutInventory",
+                "ssm:StartAutomationExecution",
+                "ssm:ListCommands",
+                "ec2:DescribeInstances",
+                "ssm:DescribeInstanceInformation",
+                "ec2:DescribeTags",
+                "ssm:ListCommandInvocations",
+                "ssm:UpdateInstanceAssociationStatus",
+                "license-manager:ListLicenseSpecificationsForResource",
+                "license-manager:ListLicenseConfigurations",
+                "ec2messages:GetEndpoint",
+                "ec2messages:FailMessage",
+                "ec2messages:AcknowledgeMessage",
+                "ec2messages:SendReply",
+                "ec2messages:GetMessages",
+                "tag:GetResources"
             ],
             "Resource": [
                 "(ARN OF YOUR LICENSE CONFIGURATIONS)"
@@ -80,29 +95,6 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
             "Effect": "Allow",
             "Action": "iam:PassRole",
             "Resource": "arn:aws:iam::(AWS-ACCOUNT-ID):role/SQLServerLicenseTrackingSolution-Role"
-        },
-        {
-            "Sid": "sid3",
-            "Effect": "Allow",
-            "Action": [
-                "ssm:DeleteInventory",
-                "ssm:PutInventory",
-                "ssm:StartAutomationExecution",
-                "ssm:ListCommands",
-                "ssm:DescribeInstanceInformation",
-                "ssm:ListCommandInvocations",
-                "ssm:UpdateInstanceAssociationStatus",
-                "ec2:DescribeInstances",
-                "ec2:DescribeTags",
-                "license-manager:ListLicenseSpecificationsForResource",
-                "ec2messages:GetEndpoint",
-                "ec2messages:FailMessage",
-                "ec2messages:AcknowledgeMessage",
-                "ec2messages:SendReply",
-                "ec2messages:GetMessages",
-                "tag:GetResources"
-            ],
-            "Resource": "*"
         }
     ]
 }
@@ -116,12 +108,13 @@ Create an IAM policy that allows Systems Manager to call other AWS services, suc
 9. On the **Select role type** page, choose **AWS service**, and then choose **Systems Manager**
 10. Under **Select your use case**, choose **Systems Manager**
 11. Choose **Next: Permissions**
-12. For **Filter policies**, enter `SQLServerLicenseTrackingSolution-Policy`
-13. Choose **Next: Tags**
-14. Choose **Next: Review**
-15. For **Role name**, enter `SQLServerLicenseTrackingSolution-Role`
-16. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`
-17. Choose **Create role**
+12. For **Filter policies**, enter `AmazonSSMAutomationRole`, AWS managed policy that provides permissions for EC2 Automation service to execute activities defined within Automation documents
+13. Next, add the above created custom policy by entering `SQLServerLicenseTrackingSolution-Policy`
+14. Choose **Next: Tags**
+15. Choose **Next: Review**
+16. For **Role name**, enter `SQLServerLicenseTrackingSolution-Role`
+17. For **Description**, enter `Role used by SSM and License Manager to track your SQL Server licenses using License Manager`
+18. Choose **Create role**
 
 
 ## Create the Automation Documents
