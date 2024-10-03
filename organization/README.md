@@ -147,9 +147,7 @@ capabilities:
 
 # Walkthrough
 
-[![cfn-stack](images/cfn-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=SQLServer-LTS&templateURL=https://pb-solution-artifacts.s3.ap-southeast-2.amazonaws.com/sql-server-lts/template.yaml)
-
-To deploy the solution, launch this CloudFormation template in the
+To deploy the solution, launch this [CloudFormation template] (https://d2908q01vomqb2.cloudfront.net/artifacts/MTBlog/DevOps-1574/sql-server-lts/CloudFormation/templatev3.yaml) in the
 management account of your organization. 
 
 This template deploys the following resources:
