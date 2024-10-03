@@ -63,14 +63,17 @@ an organization, **complete** these steps.
     run the following command to create the following license configurations (case-sensitive):
 
     ```
-    for r in REGION-1 REGION-2; do for i in SQLServerEELicenseConfiguration SQLServerSTDLicenseConfiguration SQLServerDEVLicenseConfiguration SQLServerWEBLicenseConfiguration SQLServerEXPLicenseConfiguration; do aws license-manager create-license-configuration --name "$i" --license-counting-type vCPU --region $r; done; done
+    for r in REGION-1 REGION-2; do for i in SQLServerEELicenseConfigurationBYOL SQLServerEELicenseConfigurationLI SQLServerSTDLicenseConfigurationBYOL SQLServerSTDLicenseConfigurationLI SQLServerDEVLicenseConfigurationBYOL SQLServerWEBLicenseConfigurationBYOL SQLServerWEBLicenseConfigurationLI SQLServerEXPLicenseConfigurationBYOL; do aws license-manager create-license-configuration --name "$i" --license-counting-type vCPU --region $r; done; done
     ```
 
-    - *SQLServerEELicenseConfiguration* for Enterprise Edition
-    - *SQLServerSTDLicenseConfiguration* for Standard Edition
-    - *SQLServerDEVLicenseConfiguration* for Developer Edition
-    - *SQLServerWEBLicenseConfiguration* for Web Edition
-    - *SQLServerEXPLicenseConfiguration* for Express Edition
+    - *SQLServerEELicenseConfigurationBYOL* for Enterprise Edition
+    - *SQLServerSTDLicenseConfigurationBYOL* for Standard Edition
+    - *SQLServerWEBLicenseConfigurationBYOL* for Web Edition
+    - *SQLServerDEVLicenseConfigurationBYOL* for Developer Edition
+    - *SQLServerEXPLicenseConfigurationBYOL* for Express Edition
+    - *SQLServerEELicenseConfigurationLI* for License Included Enterprise Edition 
+    - *SQLServerSTDLicenseConfigurationLI* for License Included Standard Edition
+    - *SQLServerWEBLicenseConfigurationLI* for License Included Web Edition
 
   - **Share license configurations.** After you have defined your
     configurations, use AWS Organizations or AWS Resource Access Manager
@@ -127,10 +130,10 @@ capabilities:
   
   3. **Invoke the SQLServerLTS-ManageLicenceUtilization Automation**: Once the deletion has been completed, the SQLServerLTS-Orchestrate Automation invokes the SQLServerLTS-ManageLicenceUtilization Automation to initiate the discovery of Oracle databases in your account and track their utilization for license management.
   
-  4. **Remove old License Manager data**: The Automation first disassociates the target instance from an existing License Configuration. This makes sure that the latest discovered licenses are available in License Manager for scenarios where changes have been made on the instance. For example, somebody deletes or installs a new edition of Oracle database on the target instance after the previous Automation run.
-  
-  5. **Discovery**: The Discover Automation then targets instances based on the State Manager association definition to determine the type of Oracle database running, and stores this data in the artifacts bucket under ssm-output. Instances can be targeted using ParameterValues, ResourceGroup or with tag: (default), AWS::EC2::Instance, InstanceIds, instanceids. Refer the API reference for Target for more details.
+  4. **Discovery**: The Discover Automation then targets instances based on the State Manager association definition to determine the type of Oracle database running, and stores this data in the artifacts bucket under ssm-output. Instances can be targeted using ParameterValues, ResourceGroup or with tag: (default), AWS::EC2::Instance, InstanceIds, instanceids. Refer the API reference for Target for more details.
 
+  5. **Remove old License Manager data**: The Automation first disassociates the target instance from an existing License Configuration. This makes sure that the latest discovered licenses are available in License Manager for scenarios where changes have been made on the instance. For example, somebody deletes or installs a new edition of Oracle database on the target instance after the previous Automation run.
+  
   6. **Update Inventory**: The discovered data is used to update the Systems Manager Inventory. In this step, Automation creates two new custom schemas along with the metadata to store the Oracle edition details along with the management packs.
   
   7. **Update License Manager**: Finally, the Automation updates the License Manager with the license utilization data and associates the target instance with the appropriate license specification that has been defined in License Manager. Discovered data under ssm-output is cleared for the next run.
