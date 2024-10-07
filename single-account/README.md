@@ -199,7 +199,7 @@ After an association has been created, it will trigger the first run of the docu
 12.	In **Customer managed licenses**, review the configurations to see if they have been updated, as shown in Figure 8.
 
 ![](images/customer-managed-licenses.png)
-<p align="center">Figure 7: Cusomter-managed license configurations</p>
+<p align="center">Figure 7: Customer-managed license configurations</p>
 
 13. Choose any of the **License configuration name** which has more than 1 license consumed. All the associated instances will be listed under **Resources**, as shown in Figure 9.
 
